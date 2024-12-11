@@ -19,7 +19,7 @@ const Header = () => {
 
   return (
     // ganti jadi fixed jika ada masalah
-    <nav className="sticky top-0 flex w-full items-center justify-between bg-primary p-6">
+    <nav className="over sticky top-0 flex w-full items-center justify-between bg-primary p-6">
       {/* Logo & Branding */}
       <div className="flex items-center space-x-2">
         <Link>
@@ -88,7 +88,9 @@ const Header = () => {
 
       {/* Menu Mobile muncul dari kanan */}
       <div
-        className={`absolute right-0 top-[60px] h-[calc(100vh-60px)] w-64 bg-primary transition-transform duration-300 ease-in-out md:hidden ${isMenuOpen ? `translate-x-0` : `translate-x-full`}`}
+        className={`absolute right-0 top-[60px] h-[calc(100vh-60px)] w-64 bg-primary transition-transform duration-300 ease-in-out md:hidden ${
+          isMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="mt-10 flex flex-col items-center justify-center space-y-4 px-4">
           <Link

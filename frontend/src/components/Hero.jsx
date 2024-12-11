@@ -5,6 +5,7 @@ import bgImage from "../assets/bg.jpg";
 const Hero = () => {
   return (
     <div
+      id="home"
       className="relative flex min-h-screen items-center bg-cover bg-no-repeat"
       style={{
         backgroundImage: `url(${bgImage})`,

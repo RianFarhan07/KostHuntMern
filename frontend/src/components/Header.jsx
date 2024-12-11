@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { FaHeart, FaSearch, FaUser } from "react-icons/fa";
 import { GiHamburgerMenu } from "react-icons/gi";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Header = () => {
   const [isSearchActive, setSearchActive] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
 
   const toggleSearch = () => {
     setSearchActive(!isSearchActive);
@@ -17,12 +18,31 @@ const Header = () => {
     setSearchActive(false);
   };
 
+  const getLinkComponent = () => {
+    // Jika berada di halaman Home, kembalikan <a> untuk href
+    if (location.pathname === "/") {
+      return "a"; // Menggunakan tag <a> jika di Home
+    }
+    // Jika di halaman lain, gunakan <Link> untuk routing React
+    return Link;
+  };
+
+  const getLinkTarget = () => {
+    // Menentukan target link berdasarkan halaman
+    if (location.pathname === "/") {
+      return { href: `#home` }; // Gunakan href jika di Home
+    }
+    return { to: "/" }; // Gunakan to jika di halaman lain
+  };
+
+  const LinkComponent = getLinkComponent();
+
   return (
     // ganti jadi fixed jika ada masalah
     <nav className="sticky top-0 z-50 flex w-full items-center justify-between bg-primary p-6">
       {/* Logo & Branding */}
       <div className="flex items-center space-x-2">
-        <Link>
+        <Link to={"/sign-in"}>
           <FaUser className="text-2xl text-white transition-all duration-300 hover:text-slate-700" />
         </Link>
         <p className="group flex">
@@ -37,18 +57,18 @@ const Header = () => {
 
       {/* Menu Links untuk desktop */}
       <div className="hidden space-x-5 md:flex">
-        <Link
-          to={"#home"}
+        <LinkComponent
+          {...getLinkTarget()} // Gunakan href jika di Home, atau to jika di halaman lain
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
         >
           Beranda
-        </Link>
-        <Link
-          to={"#about"}
+        </LinkComponent>
+        <a
+          href="#about"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
         >
           Info
-        </Link>
+        </a>
         <Link className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100">
           Kost
         </Link>

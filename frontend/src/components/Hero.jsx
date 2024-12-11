@@ -15,7 +15,7 @@ const Hero = () => {
           "linear-gradient(to bottom, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 0.8) 80%, rgba(0, 0, 0, 0.4) 90%, rgba(0, 0, 0, 0) 100%)",
       }}
     >
-      <main className="fixed top-11 p-8 text-center text-slate-200 md:top-auto">
+      <main className="fixed top-11 p-8 text-center text-slate-200 md:top-60">
         <h1 className="mb-6 text-5xl font-bold leading-tight text-gray-800 drop-shadow-lg md:text-7xl">
           Temukan <br />
           <span className="text-yellow-500">Kost</span> <br /> Impianmu

@@ -1,0 +1,114 @@
+:root {
+  --primary: #ffc107;
+  --on-primary: #ffffff;
+  --primary-variant: #ffa000;
+  --secondary: #03a9f4;
+  --background: #ffffff;
+  --surface: #fafafa;
+  --onsurface: #000000;
+}
+
+container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.about,
+.menu,
+.contact {
+  padding: 7rem 0;
+}
+
+.about-header,
+.menu-header,
+.contact-header {
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.about-header h2,
+.menu-header h2,
+.contact-header h2 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.about-header span,
+.menu-header span,
+.contact-header span {
+  color: var(--primary);
+  position: relative;
+}
+
+.header-line {
+  width: 80px;
+  height: 4px;
+  background: var(--primary);
+  margin: 0 auto;
+  border-radius: 2px;
+}
+
+.about-info {
+  display: flex;
+  gap: 4rem;
+  align-items: center;
+}
+
+.about-img {
+  flex: 1;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.about-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  mask-image: url(../assets/house-with-money-symbol-svgrepo-com.svg);
+  mask-size: 50%;
+  mask-repeat: no-repeat;
+}
+
+.about-img:hover img {
+  transform: scale(1.05);
+}
+
+.img-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--primary-rgb), 0.1),
+    rgba(var(--primary-rgb), 0.2)
+  );
+}
+
+.about-content {
+  flex: 1;
+}
+
+.content-wrapper {
+  max-width: 90%;
+}
+
+.about-content h3 {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.about-content p {
+  font-size: 1.6rem;
+  line-height: 1.8;
+  color: #666;
+  margin-bottom: 2rem;
+}

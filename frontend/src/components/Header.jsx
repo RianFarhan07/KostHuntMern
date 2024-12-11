@@ -119,18 +119,18 @@ const Header = () => {
         }`}
       >
         <div className="mt-10 flex flex-col items-center justify-center space-y-4 px-4">
-          <Link
-            to="/"
+          <LinkComponent
+            {...getLinkTarget()}
             className="text-2xl text-white transition-all hover:text-black"
           >
             Beranda
-          </Link>
-          <Link
-            to="/info"
+          </LinkComponent>
+          <a
+            href="#about"
             className="mt text-2xl text-white transition-all hover:text-black"
           >
             Info
-          </Link>
+          </a>
           <Link
             to="/kost"
             className="mt text-2xl text-white transition-all hover:text-black"

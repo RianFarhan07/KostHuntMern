@@ -19,7 +19,7 @@ const Header = () => {
 
   return (
     // ganti jadi fixed jika ada masalah
-    <nav className="over sticky top-0 flex w-full items-center justify-between bg-primary p-6">
+    <nav className="sticky top-0 z-50 flex w-full items-center justify-between bg-primary p-6">
       {/* Logo & Branding */}
       <div className="flex items-center space-x-2">
         <Link>

@@ -21,12 +21,19 @@ const Hero = () => {
           Temukan <br />
           <span className="text-yellow-500">Kost</span> <br /> Impianmu
         </h1>
-        <p className="mb-8 mt-96 text-xl text-gray-600 drop-shadow-2xl md:mt-0 md:text-[22px]">
+        <p
+          style={{
+            color: "white",
+            textShadow:
+              "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+          }}
+          className="mb-8 mt-96 text-xl text-gray-600 drop-shadow-2xl md:mt-0 md:text-[22px]"
+        >
           Pilihan kost terbaik untuk kenyamanan tempat tinggal anda
         </p>
         <Link
           to="/cari-kost"
-          className="absolute right-20 top-[50%] inline-block rounded-lg bg-yellow-400 px-14 py-6 font-semibold text-black shadow transition hover:bg-yellow-500 hover:shadow-lg md:left-[240px] md:right-auto md:top-80"
+          className="absolute right-20 top-[50%] inline-block rounded-lg bg-yellow-400 px-14 py-6 text-xl font-semibold text-black shadow transition hover:bg-yellow-500 hover:shadow-lg md:left-[240px] md:right-auto md:top-80"
         >
           Cari Sekarang
         </Link>

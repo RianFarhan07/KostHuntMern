@@ -1,25 +1,58 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Oauth from "../components/Oauth";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  signInFailure,
+  signInStart,
+  signInSuccess,
+} from "../redux/user/userSlice.js";
 
 const Signin = () => {
-  const [message, setMessage] = useState("");
+  const { loading, error } = useSelector((state) => state.user);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm({
     mode: "onSubmit",
   });
 
-  const onSubmit = (data) => {};
+  const onSubmit = async (data) => {
+    console.log(JSON.stringify(data));
+    dispatch(signInStart());
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+
+      const responseData = await res.json();
+      console.log(responseData);
+
+      if (!res.ok) {
+        dispatch(signInFailure(responseData.message));
+        return;
+      }
+      dispatch(signInSuccess(responseData));
+      navigate("/");
+    } catch (error) {
+      dispatch(signInFailure(error.message));
+      console.log(error.message);
+    }
+  };
 
   const togglePasswordVisibility = (type) => {
     if (type == "password") {
@@ -53,7 +86,7 @@ const Signin = () => {
               })}
               type="email"
               name="email"
-              id="name"
+              id="email"
               placeholder="Enter your email"
               autoComplete="email"
               className={`w-full appearance-none rounded border px-3 py-2 leading-tight shadow focus:outline-none focus:ring-2 ${
@@ -84,7 +117,7 @@ const Signin = () => {
                 })}
                 type={showPassword ? "text" : "password"}
                 name="password"
-                id="name"
+                id="password"
                 placeholder="Create your password"
                 autoComplete="new-password"
                 className={`w-full appearance-none rounded border px-3 py-2 pr-10 leading-tight shadow focus:outline-none focus:ring-2 ${
@@ -106,10 +139,10 @@ const Signin = () => {
             )}
           </div>
 
-          {message && (
+          {error && (
             <div className="mb-4">
               <p className="rounded bg-red-50 p-2 text-center text-sm text-red-500">
-                {message}
+                {error}
               </p>
             </div>
           )}

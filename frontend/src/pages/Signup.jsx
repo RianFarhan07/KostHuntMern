@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Oauth from "../components/Oauth";
+import { useDispatch, useSelector } from "react-redux";
+import { signInFailure, signInStart } from "../redux/user/userSlice.js";
 
 const Signup = () => {
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -15,22 +20,32 @@ const Signup = () => {
     watch,
     formState: { errors },
   } = useForm({
-    mode: "onSubmit",
+    mode: "onBlur",
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     try {
-      if (data.password !== data.confirmPassword) {
-        setMessage("Passwords do not match");
+      const res = await fetch("api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await res.json();
+
+      if (!res.ok) {
+        setError(responseData.message || "Something went wrong");
+        setLoading(false);
         return;
       }
-      console.log("Registration Data:", {
-        username: data.username,
-        email: data.email,
-      });
-      setMessage("");
+      setLoading(false);
+      navigate("/sign-in");
     } catch (error) {
-      setMessage(error.message || "Registration failde. please try again.");
+      setError("Network error. Please try again.");
+      console.log(error);
+      setLoading(false);
     }
   };
 
@@ -92,7 +107,7 @@ const Signup = () => {
               })}
               type="email"
               name="email"
-              id="name"
+              id="email"
               placeholder="Enter your email"
               autoComplete="email"
               className={`w-full appearance-none rounded border px-3 py-2 leading-tight shadow focus:outline-none focus:ring-2 ${
@@ -123,7 +138,7 @@ const Signup = () => {
                 })}
                 type={showPassword ? "text" : "password"}
                 name="password"
-                id="name"
+                id="password"
                 placeholder="Create your password"
                 autoComplete="new-password"
                 className={`w-full appearance-none rounded border px-3 py-2 pr-10 leading-tight shadow focus:outline-none focus:ring-2 ${
@@ -181,10 +196,10 @@ const Signup = () => {
               </p>
             )}
           </div>
-          {message && (
+          {error && (
             <div className="mb-4">
               <p className="rounded bg-red-50 p-2 text-center text-sm text-red-500">
-                {message}
+                {error}
               </p>
             </div>
           )}

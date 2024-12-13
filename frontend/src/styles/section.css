@@ -112,3 +112,157 @@ container {
   color: #666;
   margin-bottom: 2rem;
 }
+
+/* Media Queries */
+
+/* Laptop */
+@media (max-width: 1024px) {
+  .about {
+    font-size: 70%;
+  }
+
+  .about,
+  .menu,
+  .contact {
+    padding: 7rem 0;
+  }
+
+  .about-info {
+    gap: 3rem;
+  }
+
+  .contact-wrapper {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .kost-card-button {
+    font-size: 1.2rem;
+  }
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .about {
+    font-size: 65%;
+  }
+
+  /* About Section Styles */
+  .about,
+  .menu,
+  .contact {
+    padding: 6rem 0;
+  }
+
+  .about-info {
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .about-img {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .content-wrapper {
+    max-width: 100%;
+    text-align: center;
+    padding: 0 2rem;
+  }
+
+  .about-header h2,
+  .menu-header h2,
+  .contact-header h2 {
+    font-size: 2.8rem;
+  }
+
+  .about-content h3 {
+    font-size: 2.2rem;
+  }
+
+  .about-content p {
+    font-size: 1.5rem;
+  }
+
+  .learn-more {
+    padding: 1.2rem 2.5rem;
+  }
+
+  .contact-wrapper {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .footer-section p i {
+    width: 20px;
+    height: 20px;
+  }
+
+  .modal-content {
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+}
+
+/* Mobile L */
+@media (max-width: 576px) {
+  .about {
+    font-size: 60%;
+  }
+
+  .about,
+  .menu,
+  .contact {
+    padding: 6rem 0;
+  }
+
+  .about-header,
+  .menu-header,
+  .contact-header {
+    margin-bottom: 3rem;
+  }
+
+  .about-header h2 .menu-header h2,
+  .contact-header h2 {
+    font-size: 2.4rem;
+  }
+
+  .about-content h3 {
+    font-size: 2rem;
+  }
+
+  .about-content p {
+    font-size: 1.4rem;
+    line-height: 1.6;
+  }
+
+  .about-img {
+    max-width: 100%;
+  }
+}
+
+/* Mobile S */
+@media (max-width: 450px) {
+  .about {
+    font-size: 55%;
+  }
+
+  .about {
+    padding: 7rem 0;
+  }
+
+  .about-header h2,
+  .menu-header h2,
+  .contact-header h2 {
+    font-size: 2rem;
+  }
+
+  .about-content h3 {
+    font-size: 1.8rem;
+  }
+
+  .about-content p {
+    font-size: 1.3rem;
+  }
+}

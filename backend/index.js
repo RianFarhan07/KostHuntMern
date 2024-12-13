@@ -3,10 +3,19 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.router.js";
+import cors from "cors";
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // URL frontend kamu
+    methods: ["GET", "POST", "PUT", "DELETE"], // Metode HTTP yang diizinkan
+    credentials: true, // Jika menggunakan cookies atau autentikasi
+  })
+);
 
 app.use(express.json());
 app.use(cookieParser());

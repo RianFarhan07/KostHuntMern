@@ -2,11 +2,13 @@ import { useState } from "react";
 import { FaHeart, FaSearch, FaUser } from "react-icons/fa";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const Header = () => {
   const [isSearchActive, setSearchActive] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { currentUser } = useSelector((state) => state.user);
 
   const toggleSearch = () => {
     setSearchActive(!isSearchActive);
@@ -42,17 +44,27 @@ const Header = () => {
     <nav className="sticky top-0 z-50 flex w-full items-center justify-between bg-primary p-6">
       {/* Logo & Branding */}
       <div className="flex items-center space-x-2">
-        <Link to={"/sign-in"}>
-          <FaUser className="text-2xl text-white transition-all duration-300 hover:text-slate-700" />
+        <Link to={"/profile"}>
+          {currentUser ? (
+            <img
+              src={encodeURI(currentUser.avatar)}
+              alt="profile"
+              className="h-7 w-7 rounded-full object-cover"
+            />
+          ) : (
+            <FaUser className="text-2xl text-white transition-all duration-300 hover:text-slate-700" />
+          )}
         </Link>
-        <p className="group flex">
-          <span className="text-3xl font-extrabold italic text-white transition-all duration-500 group-hover:text-black">
-            Kost
-          </span>
-          <span className="text-3xl font-extrabold italic text-black transition-all duration-500 group-hover:text-white">
-            Hunt
-          </span>
-        </p>
+        <Link to={"/"}>
+          <p className="group flex">
+            <span className="text-3xl font-extrabold italic text-white transition-all duration-500 group-hover:text-black">
+              Kost
+            </span>
+            <span className="text-3xl font-extrabold italic text-black transition-all duration-500 group-hover:text-white">
+              Hunt
+            </span>
+          </p>
+        </Link>
       </div>
 
       {/* Menu Links untuk desktop */}

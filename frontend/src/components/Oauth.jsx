@@ -14,6 +14,7 @@ const Oauth = () => {
       const provider = new GoogleAuthProvider();
 
       const result = await signInWithPopup(auth, provider);
+      const firebaseUid = result.user.uid;
 
       const response = await fetch("/api/auth/google", {
         method: "POST",
@@ -24,6 +25,8 @@ const Oauth = () => {
           name: result.user.displayName,
           email: result.user.email,
           photo: result.user.photoURL,
+          loginSource: "firebase",
+          firebaseUid: firebaseUid,
         }),
       });
 

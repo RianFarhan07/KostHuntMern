@@ -173,7 +173,7 @@ const Signup = () => {
                   validate: (value) =>
                     value === watch("password") || "Passwords do not match",
                 })}
-                type="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 id="name"
                 placeholder="Repeat your password"

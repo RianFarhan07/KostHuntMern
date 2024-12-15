@@ -21,6 +21,17 @@ const userSchema = new mongoose.Schema(
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTF5-3YjBcXTqKUlOAeUUtuOLKgQSma2wGG1g&s",
     },
+    loginSource: {
+      type: String,
+      enum: ["mongo", "firebase"],
+      required: true,
+    },
+    firebaseUid: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,

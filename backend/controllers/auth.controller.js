@@ -12,6 +12,7 @@ export const signup = async (req, res, next) => {
       username,
       email,
       password: hashedPassword,
+      loginSource: "mongo",
     });
 
     await newUser.save();
@@ -62,9 +63,22 @@ export const signin = async (req, res, next) => {
 
 export const google = async (req, res, next) => {
   try {
+    const { email, name, photo, firebaseUid } = req.body;
+
+    // Validasi input
+    if (!email || !firebaseUid) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Email and Firebase UID are required",
+        });
+    }
+
     // cek user apakah ada
     const user = await User.findOne({ email: req.body.email });
     if (user) {
+      // Jika user sudah ada, buat JWT
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
       const { password: pass, ...rest } = user._doc;
 
@@ -89,6 +103,8 @@ export const google = async (req, res, next) => {
         email: req.body.email,
         password: hashedPassword,
         avatar: req.body.photo,
+        loginSource: req.body.loginSource,
+        firebaseUid: req.body.firebaseUid,
       });
       await newUser.save();
       const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);

@@ -34,6 +34,7 @@ const Profile = () => {
     username: currentUser?.username || "",
     email: currentUser?.email || "",
     avatar: currentUser?.avatar || "",
+    password: "",
   });
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const dispatch = useDispatch();
@@ -46,11 +47,24 @@ const Profile = () => {
         username: currentUser.username || "",
         email: currentUser.email || "",
         avatar: currentUser.avatar || "",
+        password: "",
       }));
     }
   }, [currentUser]);
 
-  console.log(formData);
+  const hasChanges = () => {
+    return (
+      formData.username !== currentUser.username ||
+      formData.avatar !== currentUser.avatar ||
+      (formData.password &&
+        formData.password.trim() !== "" &&
+        !isPasswordDisabled())
+    );
+  };
+
+  const isPasswordDisabled = () => {
+    return currentUser?.loginSource === "firebase";
+  };
 
   // Add effect to fetch user data on component mount
   useEffect(() => {
@@ -80,11 +94,6 @@ const Profile = () => {
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return password === "" || passwordRegex.test(password);
-  };
-
-  const isEmailValid = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
   };
 
   useEffect(() => {
@@ -147,11 +156,23 @@ const Profile = () => {
   };
 
   const handleChange = (e) => {
+    // Prevent email from being changed
+    if (e.target.id === "email") return;
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!hasChanges()) {
+      Swal.fire({
+        icon: "info",
+        title: "Tidak Ada Perubahan",
+        text: "Tidak ada data yang diubah",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     if (!formData.username || !formData.email) {
@@ -174,16 +195,6 @@ const Profile = () => {
       return;
     }
 
-    if (!isEmailValid(formData.email)) {
-      Swal.fire({
-        icon: "error",
-        title: "Email Tidak Valid",
-        text: "Silakan masukkan email yang benar",
-      });
-      setIsLoading(false);
-      return;
-    }
-
     if (formData.password && !isPasswordValid(formData.password)) {
       Swal.fire({
         icon: "error",
@@ -194,6 +205,13 @@ const Profile = () => {
       return;
     }
 
+    const updateData = {
+      username: formData.username,
+      avatar: formData.avatar,
+      ...(!isPasswordDisabled() &&
+        formData.password && { password: formData.password }),
+    };
+
     try {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
@@ -201,7 +219,7 @@ const Profile = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       });
 
       if (!res.ok) {
@@ -365,9 +383,8 @@ const Profile = () => {
                 type="email"
                 id="email"
                 value={formData.email}
-                onChange={handleChange}
-                placeholder="Email"
-                className="w-full rounded-lg border border-gray-300 p-3 pl-10 transition focus:border-primary focus:ring-2 focus:ring-primary/50"
+                readOnly
+                className="w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 p-3 pl-10 text-gray-600"
               />
               <MdOutlineEmail
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -382,12 +399,26 @@ const Profile = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="New Password"
-                className="w-full rounded-lg border border-gray-300 p-3 pl-10 transition focus:border-primary focus:ring-2 focus:ring-primary/50"
+                disabled={isPasswordDisabled()}
+                className={`w-full rounded-lg border border-gray-300 p-3 pl-10 transition ${
+                  isPasswordDisabled()
+                    ? "cursor-not-allowed bg-gray-100 text-gray-600"
+                    : "focus:border-primary focus:ring-2 focus:ring-primary/50"
+                }`}
               />
               <RiLockPasswordLine
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className={`absolute left-3 text-gray-400 ${
+                  isPasswordDisabled()
+                    ? "top-4 text-gray-500"
+                    : "top-1/2 -translate-y-1/2 transform"
+                }`}
                 size={20}
               />
+              {isPasswordDisabled() && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Password cannot be changed for Google accounts
+                </p>
+              )}
             </div>
 
             <button

@@ -76,7 +76,7 @@ const Header = () => {
             <>
               <button className="relative" onClick={toggleDropdown}>
                 <img
-                  src={encodeURI(currentUser.avatar)}
+                  src={currentUser.avatar}
                   alt="profile"
                   className="h-9 w-9 rounded-full object-cover"
                   onError={(e) => {

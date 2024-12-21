@@ -86,13 +86,12 @@ const Profile = () => {
   }, []);
 
   const isUsernameValid = (username) => {
-    const usernameRegex = /^[^\s]{3,20}$/;
+    const usernameRegex = /^[^\s]{3,25}$/;
     return usernameRegex.test(username);
   };
 
   const isPasswordValid = (password) => {
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^[A-Za-z\d]{6,}$/;
     return password === "" || passwordRegex.test(password);
   };
 
@@ -189,7 +188,7 @@ const Profile = () => {
       Swal.fire({
         icon: "error",
         title: "Username Tidak Valid",
-        text: "Username harus memiliki 3-20 karakter dan tidak boleh hanya berisi spasi",
+        text: "Username harus memiliki 3-25 karakter dan tidak boleh hanya berisi spasi",
       });
       setIsLoading(false);
       return;
@@ -199,7 +198,7 @@ const Profile = () => {
       Swal.fire({
         icon: "error",
         title: "Password Tidak Valid",
-        text: "Password minimal 8 karakter, memiliki huruf besar, angka, dan karakter khusus",
+        text: "Password minimal 8 karakter",
       });
       setIsLoading(false);
       return;

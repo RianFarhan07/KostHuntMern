@@ -15,20 +15,23 @@ container {
 
 .about,
 .menu,
-.contact {
+.contact,
+.kost {
   padding: 7rem 0;
 }
 
 .about-header,
 .menu-header,
-.contact-header {
+.contact-header,
+.kost-header {
   text-align: center;
   margin-bottom: 5rem;
 }
 
 .about-header h2,
 .menu-header h2,
-.contact-header h2 {
+.contact-header h2,
+.kost-header h2 {
   font-size: 3rem;
   font-weight: 700;
   margin-bottom: 1rem;
@@ -37,7 +40,8 @@ container {
 
 .about-header span,
 .menu-header span,
-.contact-header span {
+.contact-header span,
+.kost-header span {
   color: var(--primary);
   position: relative;
 }
@@ -117,13 +121,15 @@ container {
 
 /* Laptop */
 @media (max-width: 1024px) {
-  .about {
+  .about,
+  .kost {
     font-size: 70%;
   }
 
   .about,
   .menu,
-  .contact {
+  .contact,
+  .kost {
     padding: 7rem 0;
   }
 
@@ -143,14 +149,16 @@ container {
 
 /* Tablet */
 @media (max-width: 768px) {
-  .about {
+  .about,
+  .kost {
     font-size: 65%;
   }
 
   /* About Section Styles */
   .about,
   .menu,
-  .contact {
+  .contact,
+  .kost {
     padding: 6rem 0;
   }
 
@@ -173,7 +181,8 @@ container {
 
   .about-header h2,
   .menu-header h2,
-  .contact-header h2 {
+  .contact-header h2,
+  .kost-header h2 {
     font-size: 2.8rem;
   }
 
@@ -207,24 +216,28 @@ container {
 
 /* Mobile L */
 @media (max-width: 576px) {
-  .about {
+  .about,
+  .kost {
     font-size: 60%;
   }
 
   .about,
   .menu,
-  .contact {
+  .contact,
+  .kost {
     padding: 6rem 0;
   }
 
   .about-header,
   .menu-header,
-  .contact-header {
+  .contact-header,
+  .kost-header {
     margin-bottom: 3rem;
   }
 
   .about-header h2 .menu-header h2,
-  .contact-header h2 {
+  .contact-header h2,
+  .kost-header h2 {
     font-size: 2.4rem;
   }
 
@@ -244,17 +257,20 @@ container {
 
 /* Mobile S */
 @media (max-width: 450px) {
-  .about {
+  .about,
+  .kost {
     font-size: 55%;
   }
 
-  .about {
+  .about,
+  .kost {
     padding: 7rem 0;
   }
 
   .about-header h2,
   .menu-header h2,
-  .contact-header h2 {
+  .contact-header h2,
+  .kost-header h2 {
     font-size: 2rem;
   }
 

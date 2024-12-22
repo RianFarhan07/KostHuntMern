@@ -1,6 +1,8 @@
+/* eslint-disable react/prop-types */
 import React from "react";
 import { FaHeart, FaMap, FaMapMarkedAlt } from "react-icons/fa";
 import gambarKost from "../assets/default/kostDefault.jpg";
+import "../styles/section.css";
 
 const KostCard = ({ item }) => {
   return (
@@ -16,21 +18,21 @@ const KostCard = ({ item }) => {
           {item?.name || "Nama Kost"}
         </h3>
         <div className="mb-3 flex items-center text-gray-600">
-          <FaMapMarkedAlt className="mr-1 h-4 w-4 text-blue-600" />
+          <FaMapMarkedAlt className="mr-1 h-4 w-4 text-primary" />
           <span>{item?.location || "Lokasi"}</span>
         </div>
         <div className="mb-4">
           {item?.originalPrice ? (
             <div>
-              <span className="text-lg font-bold text-blue-600">
+              <span className="text-lg font-bold text-primary">
                 Rp {(item?.price || 0).toLocaleString()} /bulan
               </span>
               <span className="ml-2 text-sm text-gray-500 line-through">
-                Rp {(item?.originalPrie || 0).toLocaleString()} /bulan
+                Rp {(item?.originalPrice || 0).toLocaleString()} /bulan
               </span>
             </div>
           ) : (
-            <span className="text-lg font-bold text-blue-600">
+            <span className="text-lg font-bold text-primary">
               Rp {(item?.price || 0).toLocaleString()} /bulan
             </span>
           )}
@@ -43,11 +45,11 @@ const KostCard = ({ item }) => {
         </div>
 
         <div className="mt-auto flex items-center">
-          <button className="rounded border-2 border-blue-600 px-4 py-2 text-sm font-bold text-blue-600 transition-colors duration-300 hover:bg-blue-600 hover:text-white">
+          <button className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white">
             Lihat Detail
           </button>
           <button className="ml-auto rounded-full border border-blue-200 p-2 transition-colors duration-300 hover:bg-blue-50">
-            <FaHeart className="h-5 w-5 text-blue-600" />
+            <FaHeart className="h-5 w-5 text-primary" />
           </button>
         </div>
       </div>

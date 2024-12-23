@@ -14,6 +14,10 @@ const kostSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    city: {
+      type: String,
+      require: true,
+    },
     price: {
       type: Number,
       required: true,

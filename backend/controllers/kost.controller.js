@@ -42,6 +42,65 @@ export const deleteKost = async (req, res) => {
   }
 };
 
+export const updateListing = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      location,
+      city,
+      price,
+      originalPrice,
+      facilites,
+      type,
+      availability,
+      contact,
+      imgaeUrls,
+    } = req.body;
+
+    const kost = await Kost.findById(id);
+
+    if (!kost) {
+      return res.status(404).json({ message: "Kost not found" });
+    }
+
+    if (req.user.id != kost.userRef) {
+      return res
+        .status(403)
+        .json({ message: "You can only update your own kost" });
+    }
+
+    if (name !== undefined) kost.name = name;
+    if (description !== undefined) kost.description = description;
+    if (location !== undefined) kost.location = location;
+    if (city !== undefined) kost.city = city;
+    if (price !== undefined) kost.price = price;
+    if (originalPrice !== undefined) kost.originalPrice = originalPrice;
+    if (facilities !== undefined) kost.facilities = facilities;
+    if (type !== undefined) kost.type = type;
+    if (availability !== undefined) kost.availability = availability;
+    if (contact?.phone !== undefined) kost.contact.phone = contact.phone;
+    if (contact?.whatsapp !== undefined)
+      kost.contact.whatsapp = contact.whatsapp;
+    if (imageUrls !== undefined) kost.imageUrls = imageUrls;
+
+    const updatedKost = await kost.save();
+
+    res.status(200).json({
+      message: "Kost updated successfully",
+      kost: updatedKost,
+    });
+  } catch (error) {
+    console.error("Update kost error" + error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
 export const getKost = async (req, res) => {
   try {
     const kost = await Kost.findById(req.params.id);

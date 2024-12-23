@@ -1,3 +1,4 @@
+import Kost from "../models/kost.model.js";
 import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
 import bcrypt from "bcrypt";
@@ -85,6 +86,27 @@ export const getUser = async (req, res, next) => {
     const { password: pass, ...rest } = user._doc;
     res.status(200).json(rest); // Remove the nested "rest" object
   } catch (error) {
-    next(error);
+    console.error("Delete user error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export const getUserKost = async (req, res) => {
+  if (req.user.id === req.params.id) {
+    try {
+      const kost = await Kost.find({ userRef: req.params.id });
+      res.status(200).json(kost);
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server Error",
+        error: error.message,
+      });
+    }
   }
 };

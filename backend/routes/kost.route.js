@@ -5,6 +5,7 @@ import {
   deleteKost,
   getAllKost,
   getKost,
+  updateKost,
 } from "../controllers/kost.controller.js";
 
 const router = express.Router();

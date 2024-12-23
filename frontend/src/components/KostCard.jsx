@@ -3,15 +3,18 @@ import React from "react";
 import { FaHeart, FaMap, FaMapMarkedAlt } from "react-icons/fa";
 import gambarKost from "../assets/default/kostDefault.jpg";
 import "../styles/section.css";
+import { Link } from "react-router-dom";
 
 const KostCard = ({ item }) => {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-md transition-transform duration-300 hover:translate-y-1">
-      <img
-        src={item?.img[0] || gambarKost}
-        alt={item?.name || "Kost"}
-        className="h-48 w-full object-cover"
-      />
+      <Link to={`/kost/${item._id}`}>
+        <img
+          src={item?.imageUrls[0] || gambarKost}
+          alt={item?.name || "Kost"}
+          className="h-48 w-full object-cover"
+        />
+      </Link>
 
       <div className="flex flex-grow flex-col p-5">
         <h3 className="mb-2 text-2xl text-gray-800">

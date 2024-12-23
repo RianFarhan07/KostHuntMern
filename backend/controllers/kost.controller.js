@@ -42,7 +42,7 @@ export const deleteKost = async (req, res) => {
   }
 };
 
-export const updateListing = async (req, res) => {
+export const updateKost = async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -109,7 +109,7 @@ export const getKost = async (req, res) => {
     }
     res.status(200).json(kost);
   } catch (error) {
-    console.error("Delete kost error" + error);
+    console.error("Get kost error" + error);
     res.status(500).json({
       success: false,
       message: "Server Error",

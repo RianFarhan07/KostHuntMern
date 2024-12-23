@@ -5,6 +5,7 @@ import {
   deleteKost,
   getAllKost,
   getKost,
+  getRandomKost,
   updateKost,
 } from "../controllers/kost.controller.js";
 
@@ -15,5 +16,6 @@ router.delete("/delete/:id", verifyToken, deleteKost);
 router.put("/update/:id", verifyToken, updateKost);
 router.get("/get/:id", getKost);
 router.get("/getAll", getAllKost);
+router.get("/getRandom", getRandomKost);
 
 export default router;

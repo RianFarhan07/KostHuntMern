@@ -1,64 +1,65 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import KostCard from "./KostCard";
 import "../styles/section.css";
+import { FiLoader } from "react-icons/fi";
+import CustomButton from "./CustomButton";
 
 const KostList = () => {
   // Sample data - you can replace this with your actual data source
-  const kostData = [
-    {
-      id: 1,
-      name: "Kost Harmony",
-      location: "Jl. Harmoni No. 123",
-      price: 1500000,
-      originalPrice: 1800000,
-      img: "/api/placeholder/400/320",
-      facilities: ["AC", "WiFi", "Kamar Mandi Dalam"],
-    },
-    {
-      id: 2,
-      name: "Kost Paradise",
-      location: "Jl. Surya No. 456",
-      price: 1200000,
-      img: "/api/placeholder/400/320",
-      facilities: ["Wifi", "Dapur Bersama", "Parkir Motor"],
-    },
-    {
-      id: 3,
-      name: "Kost Exclusive",
-      location: "Jl. Elite No. 789",
-      price: 2000000,
-      originalPrice: 2500000,
-      img: "/api/placeholder/400/320",
-      facilities: ["AC", "WiFi", "Water Heater", "TV"],
-    },
-    {
-      id: 4,
-      name: "Kost Exclusive",
-      location: "Jl. Elite No. 789",
-      price: 2000000,
-      originalPrice: 2500000,
-      img: "/api/placeholder/400/320",
-      facilities: ["AC", "WiFi", "Water Heater", "TV"],
-    },
-    {
-      id: 5,
-      name: "Kost Exclusive",
-      location: "Jl. Elite No. 789",
-      price: 2000000,
-      originalPrice: 2500000,
-      img: "/api/placeholder/400/320",
-      facilities: ["AC", "WiFi", "Water Heater", "TV"],
-    },
-    {
-      id: 6,
-      name: "Kost Exclusive",
-      location: "Jl. Elite No. 789",
-      price: 2000000,
-      originalPrice: 2500000,
-      img: "/api/placeholder/400/320",
-      facilities: ["AC", "WiFi", "Water Heater", "TV"],
-    },
-  ];
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [kost, setKost] = useState([]);
+
+  useEffect(() => {
+    fetchKost();
+  }, []);
+
+  const fetchKost = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      const res = await fetch("/api/kost/getRandom");
+      const data = await res.json();
+
+      if (data.success === false) {
+        setError(true);
+        return;
+      }
+
+      setKost(data.kosts);
+    } catch (error) {
+      console.log(error.message);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section id="kost" className="kost">
+        <div className="container mx-auto flex min-h-[400px] items-center justify-center px-4">
+          <div className="flex flex-col items-center gap-2">
+            <FiLoader className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-gray-600">Memuat daftar kost...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Terjadi kesalahan saat memuat data.</p>
+          <CustomButton onClick={fetchKost} className="mt-4">
+            Coba Lagi
+          </CustomButton>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section id="kost" className="kost">
@@ -70,10 +71,16 @@ const KostList = () => {
           <div className="header-line"></div>
         </div>
         <div className="grid grid-cols-1 gap-8 py-5 md:grid-cols-2 lg:grid-cols-3">
-          {kostData.map((item) => (
-            <KostCard key={item.id} item={item} />
+          {kost.map((item) => (
+            <KostCard key={item._id} item={item} />
           ))}
         </div>
+        {/* Empty State */}
+        {!loading && kost.length === 0 && (
+          <div className="flex min-h-[200px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300">
+            <p className="text-gray-600">Belum ada kost yang tersedia</p>
+          </div>
+        )}
       </div>
     </section>
   );

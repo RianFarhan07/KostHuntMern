@@ -77,7 +77,7 @@ const MyKostList = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">Terjadi kesalahan saat memuat data.</p>
-          <CustomButton onClick={fetchListings} className="mt-4">
+          <CustomButton onClick={fetchKost} className="mt-4">
             Coba Lagi
           </CustomButton>
         </div>

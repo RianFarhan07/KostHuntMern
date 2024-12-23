@@ -181,3 +181,54 @@ export const getAllKost = async (req, res) => {
     });
   }
 };
+
+export const getRandomKost = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 9; // Default to 4 random kosts
+
+    // Get total count of available kosts
+    const totalKosts = await Kost.countDocuments({ availability: true });
+
+    // If no kosts are available, return empty array
+    if (totalKosts === 0) {
+      return res.status(200).json({
+        success: true,
+        kosts: [],
+        message: "No available kosts found",
+      });
+    }
+
+    // Get random kosts using aggregation pipeline
+    const randomKosts = await Kost.aggregate([
+      // Match only available kosts
+      { $match: { availability: true } },
+      // Get random documents
+      { $sample: { size: limit } },
+      // Optionally project only needed fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          price: 1,
+          originalPrice: 1,
+          facilities: 1,
+          type: 1,
+          imageUrls: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      kosts: randomKosts,
+      count: randomKosts.length,
+    });
+  } catch (error) {
+    console.error("Get random kost error: " + error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};

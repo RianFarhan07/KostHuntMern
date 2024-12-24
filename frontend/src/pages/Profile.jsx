@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaCamera, FaTrashAlt, FaSignOutAlt, FaEdit } from "react-icons/fa";
 import { MdOutlineEmail } from "react-icons/md";
+import Cookies from "js-cookie";
 import { RiLockPasswordLine } from "react-icons/ri";
 import Swal from "sweetalert2";
 import {
+  autoLogout,
   deleteUserFailure,
   deleteUserStart,
   deleteUserSuccess,
@@ -220,6 +222,19 @@ const Profile = () => {
         },
         body: JSON.stringify(updateData),
       });
+
+      if (res.status === 401) {
+        const errorData = await res.json(); // Parse JSON responsenya
+        Swal.fire({
+          icon: "error",
+          title: "Unauthorized",
+          text:
+            errorData.message ||
+            "Your session has expired. Please log in again.",
+        });
+        dispatch(autoLogout());
+        return;
+      }
 
       if (!res.ok) {
         const errorText = await res.text();

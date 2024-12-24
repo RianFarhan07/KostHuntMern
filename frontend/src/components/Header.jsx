@@ -149,16 +149,16 @@ const Header = () => {
         >
           Info
         </LinkComponent>
-        <Link
+        <LinkComponent
           {...linkTargetKost}
-          to="#kost"
+          href="#kost"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
         >
           Kost
-        </Link>
+        </LinkComponent>
         <LinkComponent
           {...linkTargetKontak}
-          to="#kontak"
+          href="#kontak"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
         >
           Kontak
@@ -222,14 +222,14 @@ const Header = () => {
           </LinkComponent>
           <LinkComponent
             {...linkTargetKost}
-            to="#kost"
+            href="#kost"
             className="mt text-2xl text-white transition-all hover:text-black"
           >
             Kost
           </LinkComponent>
           <LinkComponent
             {...linkTargetKontak}
-            to="#kontak"
+            href="#kontak"
             className="mt text-2xl text-white transition-all hover:text-black"
           >
             Kontak

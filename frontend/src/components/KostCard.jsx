@@ -6,6 +6,9 @@ import "../styles/section.css";
 import { Link } from "react-router-dom";
 
 const KostCard = ({ item }) => {
+  const handleAddToFavorite = () => {
+    //tambahkan ke favorite
+  };
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-md transition-transform duration-300 hover:translate-y-1">
       <Link to={`/kost/${item._id}`}>
@@ -48,10 +51,15 @@ const KostCard = ({ item }) => {
         </div>
 
         <div className="mt-auto flex items-center">
-          <button className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white">
-            Lihat Detail
-          </button>
-          <button className="ml-auto rounded-full border border-blue-200 p-2 transition-colors duration-300 hover:bg-blue-50">
+          <Link to={`/kost/${item._id}`}>
+            <button className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white">
+              Lihat Detail
+            </button>
+          </Link>
+          <button
+            onClick={handleAddToFavorite}
+            className="ml-auto rounded-full border border-blue-200 p-2 transition-colors duration-300 hover:bg-blue-50"
+          >
             <FaHeart className="h-5 w-5 text-primary" />
           </button>
         </div>

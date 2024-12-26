@@ -1,18 +1,26 @@
 import jwt from "jsonwebtoken";
-import { errorHandler } from "./error.js";
 
 export const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization;
+  const token = req.cookies.access_token; // Ambil token dari cookies
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    // Jika tidak ada token
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized - No token provided",
+    });
   }
 
-  try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      // Jika token tidak valid
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - Invalid token",
+      });
+    }
+
+    req.user = user; // Berhasil memverifikasi token
     next();
-  } catch (err) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+  });
 };

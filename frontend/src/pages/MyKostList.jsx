@@ -5,7 +5,9 @@ import { FiLoader } from "react-icons/fi";
 import KostCard from "../components/KostCard";
 import CustomButton from "../components/CustomButton";
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import Swal from "sweetalert2";
+import { autoLogout } from "../redux/user/userSlice";
 
 const MyKostList = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -14,6 +16,7 @@ const MyKostList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const itemsPerPage = 9;
+  const dispatch = useDispatch();
 
   useEffect(() => {
     fetchKost();
@@ -28,6 +31,19 @@ const MyKostList = () => {
 
       if (data.success === false) {
         setError(true);
+        return;
+      }
+
+      if (res.status === 401) {
+        const errorData = await res.json(); // Parse JSON responsenya
+        Swal.fire({
+          icon: "error",
+          title: "Unauthorized",
+          text:
+            errorData.message ||
+            "Your session has expired. Please log in again.",
+        });
+        dispatch(autoLogout());
         return;
       }
 

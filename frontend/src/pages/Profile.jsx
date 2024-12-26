@@ -24,6 +24,7 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const fileRef = useRef(null);
@@ -40,6 +41,7 @@ const Profile = () => {
   });
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Effect untuk sync formData dengan currentUser
   useEffect(() => {
@@ -162,6 +164,16 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  const handleUnauthorized = () => {
+    dispatch(autoLogout());
+    navigate("/sign-in");
+    Swal.fire({
+      icon: "error",
+      title: "Session Expired",
+      text: "Your session has expired. Please sign in again.",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -221,60 +233,53 @@ const Profile = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(updateData),
+        credentials: "include",
       });
-
-      if (res.status === 401) {
-        const errorData = await res.json(); // Parse JSON responsenya
-        Swal.fire({
-          icon: "error",
-          title: "Unauthorized",
-          text:
-            errorData.message ||
-            "Your session has expired. Please log in again.",
-        });
-        dispatch(autoLogout());
-        return;
-      }
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP Error: ${res.status} - ${errorText}`);
-      }
 
       const data = await res.json();
-      console.log("API Response:", data);
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          dispatch(autoLogout());
+          navigate("/sign-in");
+          Swal.fire({
+            icon: "error",
+            title: "Session Expired",
+            text: "Your session has expired. Please sign in again.",
+          });
+          return;
+        }
+
+        throw new Error(data.message || "Update failed");
+      }
 
       if (data.success === false) {
+        dispatch(updateUserFailure(data.message));
         Swal.fire({
           icon: "error",
-          title: "Pembaruan Gagal",
+          title: "Update Failed",
           text: data.message,
         });
-        dispatch(updateUserFailure(data.message));
-        setIsLoading(false);
         return;
       }
 
+      dispatch(updateUserSuccess(data));
       Swal.fire({
         icon: "success",
-        title: "Berhasil",
-        text: "Profil berhasil diperbarui",
+        title: "Success",
+        text: "Profile updated successfully",
       });
-
-      dispatch(updateUserSuccess(data));
-      setUpdateSuccess(true);
     } catch (error) {
       dispatch(updateUserFailure(error.message));
       Swal.fire({
         icon: "error",
-        title: "Kesalahan",
-        text: error.message,
+        title: "Error",
+        text: error.message || "An error occurred while updating profile",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleDeleteAccount = async () => {
     Swal.fire({
       title: "Are you sure?",

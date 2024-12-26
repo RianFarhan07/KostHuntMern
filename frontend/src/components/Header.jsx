@@ -65,7 +65,7 @@ const Header = () => {
   const linkTargetKost =
     location.pathname === "/" ? { href: "#kost" } : { to: "/" };
   const linkTargetKontak =
-    location.pathname === "/" ? { href: "#kontak" } : { to: "/" };
+    location.pathname === "/" ? { href: "#contact" } : { to: "/" };
 
   return (
     <nav className="sticky top-0 z-50 flex w-full items-center justify-between bg-primary p-6">
@@ -158,7 +158,7 @@ const Header = () => {
         </LinkComponent>
         <LinkComponent
           {...linkTargetKontak}
-          href="#kontak"
+          href="#contact"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
         >
           Kontak
@@ -229,7 +229,7 @@ const Header = () => {
           </LinkComponent>
           <LinkComponent
             {...linkTargetKontak}
-            href="#kontak"
+            href="#contact"
             className="mt text-2xl text-white transition-all hover:text-black"
           >
             Kontak

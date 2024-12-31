@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import Header from "./components/Header";
 import PrivateRoutes from "./components/PrivateRoutes";
 import MyKostList from "./pages/MyKostList";
+import AddKost from "./pages/AddKost";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route element={<PrivateRoutes />}>
           <Route path="/my-kost" element={<MyKostList />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/addkost" element={<AddKost />} />
         </Route>
       </Routes>
     </BrowserRouter>

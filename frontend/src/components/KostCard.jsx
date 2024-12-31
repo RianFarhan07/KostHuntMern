@@ -133,13 +133,15 @@ const KostCard = ({ item }) => {
 
         {/* Actions */}
         <div className="mt-auto flex items-center">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white"
-          >
-            <Link to={`/kost/${item._id}`}>Lihat Detail</Link>
-          </motion.button>
+          <Link to={`/kost/${item._id}`}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white"
+            >
+              Lihat Detail
+            </motion.button>
+          </Link>
           <motion.button
             onClick={handleAddToFavorite}
             variants={buttonVariants}
@@ -148,8 +150,8 @@ const KostCard = ({ item }) => {
             whileTap={{ scale: 0.9 }}
             className={`group ml-auto rounded-full border p-2 transition-all duration-300 ${
               isFavorite
-                ? "border-primary bg-primary hover:bg-white"
-                : "border-blue-200 hover:border-primary hover:bg-primary"
+                ? "border-primary bg-primary hover:border-white"
+                : "border-blue-200 hover:border-primary"
             }`}
             aria-label={
               isFavorite ? "Remove from favorites" : "Add to favorites"
@@ -166,8 +168,8 @@ const KostCard = ({ item }) => {
                 <FaHeart
                   className={`h-5 w-5 transition-colors duration-300 ${
                     isFavorite
-                      ? "text-white group-hover:text-primary"
-                      : "text-primary group-hover:text-white"
+                      ? "text-white group-hover:border-white"
+                      : "text-primary"
                   }`}
                 />
               </motion.div>

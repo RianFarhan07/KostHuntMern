@@ -14,7 +14,8 @@ const CustomButton = ({
     "flex items-center justify-center rounded-lg font-medium transition-colors";
 
   const variants = {
-    primary: "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-300",
+    primary:
+      "bg-primary hover:bg-primaryVariant text-white disabled:bg-blue-300",
     outline:
       "border border-gray-300 hover:bg-gray-50 text-gray-700 disabled:bg-gray-100",
     danger: "bg-red-600 hover:bg-red-700 text-white disabled:bg-red-300",

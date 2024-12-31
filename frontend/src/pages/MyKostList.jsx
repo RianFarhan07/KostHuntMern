@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import { autoLogout } from "../redux/user/userSlice";
+import { Link } from "react-router-dom";
 
 const MyKostList = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -81,7 +82,7 @@ const MyKostList = () => {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-2">
-          <FiLoader className="h-8 w-8 animate-spin text-blue-600" />
+          <FiLoader className="h-8 w-8 animate-spin text-black" />
           <p className="text-gray-600">Memuat daftar kost...</p>
         </div>
       </div>
@@ -106,10 +107,12 @@ const MyKostList = () => {
       {/* Header with Create Button */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Daftar Kost Saya</h1>
-        <CustomButton onClick={() => console.log("Add Kost")}>
-          <FaPlus className="mr-2 h-4 w-4" />
-          Tambah Kost
-        </CustomButton>
+        <Link to={"/addKost"}>
+          <CustomButton>
+            <FaPlus className="mr-2 h-4 w-4" />
+            Tambah Kost
+          </CustomButton>
+        </Link>
       </div>
 
       {/* Kost Grid */}

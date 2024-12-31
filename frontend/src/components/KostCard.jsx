@@ -1,33 +1,108 @@
 /* eslint-disable react/prop-types */
-import React from "react";
-import { FaHeart, FaMap, FaMapMarkedAlt } from "react-icons/fa";
+import { FaHeart, FaMapMarkedAlt } from "react-icons/fa";
 import gambarKost from "../assets/default/kostDefault.jpg";
 import "../styles/section.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addToFavorites,
+  removeFromFavorites,
+  selectIsFavorite,
+} from "../redux/favorite/favoriteSlice";
+import { autoLogout } from "../redux/user/userSlice";
+import Swal from "sweetalert2";
 
 const KostCard = ({ item }) => {
-  const handleAddToFavorite = () => {
-    //tambahkan ke favorite
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const isFavorite = useSelector((state) => selectIsFavorite(state, item._id));
+  const currentUser = useSelector((state) => state.user.currentUser);
+
+  const handleAddToFavorite = (e) => {
+    e.preventDefault();
+
+    if (!currentUser) {
+      dispatch(autoLogout());
+      navigate("/sign-in");
+      Swal.fire({
+        icon: "error",
+        title: "Session Expired",
+        text: "Your session has expired. Please sign in again.",
+      });
+      return;
+    }
+
+    if (isFavorite) {
+      dispatch(removeFromFavorites(item._id));
+    } else {
+      dispatch(addToFavorites(item._id));
+    }
   };
+
+  const buttonVariants = {
+    favorite: {
+      scale: [1, 1.3, 1],
+      rotate: [0, -15, 15, 0],
+      transition: {
+        duration: 0.5,
+        ease: "easeInOut",
+      },
+    },
+    unfavorite: {
+      scale: [1, 0.8, 1],
+      rotate: [0, 0, 0],
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  const heartVariants = {
+    initial: { scale: 0 },
+    animate: {
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 500,
+        damping: 15,
+      },
+    },
+    exit: { scale: 0 },
+  };
+
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-md transition-transform duration-300 hover:translate-y-1">
-      <Link to={`/kost/${item._id}`}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="kost-card flex h-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-md transition-transform duration-300 hover:-translate-y-0.5"
+    >
+      {/* Image Section */}
+      <Link to={`/kost/${item._id}`} className="block">
         <img
           src={item?.imageUrls[0] || gambarKost}
           alt={item?.name || "Kost"}
-          className="h-48 w-full object-cover"
+          className="kost-card-image h-48 w-full object-cover"
         />
       </Link>
 
-      <div className="flex flex-grow flex-col p-5">
-        <h3 className="mb-2 text-2xl text-gray-800">
+      {/* Content Section */}
+      <div className="kost-card-content flex flex-grow flex-col p-5">
+        {/* Title */}
+        <h3 className="kost-card-title mb-2 text-xl font-semibold text-gray-800">
           {item?.name || "Nama Kost"}
         </h3>
-        <div className="mb-3 flex items-center text-gray-600">
-          <FaMapMarkedAlt className="mr-1 h-4 w-4 text-primary" />
-          <span>{item?.location || "Lokasi"}</span>
+
+        {/* Location */}
+        <div className="kost-card-location mb-3 flex items-center text-gray-600">
+          <FaMapMarkedAlt className="mr-2 h-4 w-4 text-primary" />
+          <span>{item?.location || "Lokasi tidak tersedia"}</span>
         </div>
-        <div className="mb-4">
+
+        {/* Price */}
+        <div className="kost-card-price mb-4">
           {item?.originalPrice ? (
             <div>
               <span className="text-lg font-bold text-primary">
@@ -44,27 +119,63 @@ const KostCard = ({ item }) => {
           )}
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2">
-          {item.facilitites?.map((facility, index) => (
-            <span key={index}>{facility}</span>
+        {/* Facilities */}
+        <div className="kost-card-facilities mb-4 flex flex-wrap gap-2">
+          {item.facilities?.map((facility, index) => (
+            <span
+              key={index}
+              className="facility-tag rounded-full bg-primary px-3 py-1 text-xs text-white"
+            >
+              {facility}
+            </span>
           ))}
         </div>
 
+        {/* Actions */}
         <div className="mt-auto flex items-center">
-          <Link to={`/kost/${item._id}`}>
-            <button className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white">
-              Lihat Detail
-            </button>
-          </Link>
-          <button
-            onClick={handleAddToFavorite}
-            className="ml-auto rounded-full border border-blue-200 p-2 transition-colors duration-300 hover:bg-blue-50"
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="rounded border-2 border-primary px-4 py-2 text-sm font-bold text-primary transition-colors duration-300 hover:bg-primary hover:text-white"
           >
-            <FaHeart className="h-5 w-5 text-primary" />
-          </button>
+            <Link to={`/kost/${item._id}`}>Lihat Detail</Link>
+          </motion.button>
+          <motion.button
+            onClick={handleAddToFavorite}
+            variants={buttonVariants}
+            animate={isFavorite ? "favorite" : "unfavorite"}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className={`group ml-auto rounded-full border p-2 transition-all duration-300 ${
+              isFavorite
+                ? "border-primary bg-primary hover:bg-white"
+                : "border-blue-200 hover:border-primary hover:bg-primary"
+            }`}
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isFavorite ? "favorite" : "unfavorite"}
+                variants={heartVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <FaHeart
+                  className={`h-5 w-5 transition-colors duration-300 ${
+                    isFavorite
+                      ? "text-white group-hover:text-primary"
+                      : "text-primary group-hover:text-white"
+                  }`}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </motion.button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

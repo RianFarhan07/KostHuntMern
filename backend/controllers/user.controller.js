@@ -98,15 +98,38 @@ export const getUser = async (req, res, next) => {
 export const getUserKost = async (req, res) => {
   if (req.user.id === req.params.id) {
     try {
-      const kost = await Kost.find({ userRef: req.params.id });
-      res.status(200).json(kost);
+      const page = parseInt(req.query.page) || 1; // Default to page 1 if no page is provided
+      const limit = parseInt(req.query.limit) || 9; // Default to 9 items per page if no limit is provided
+      const skip = (page - 1) * limit;
+
+      // Find kost data with pagination
+      const kost = await Kost.find({ userRef: req.params.id })
+        .skip(skip) // Skip the first N records
+        .limit(limit); // Limit the number of records per page
+
+      // Count total items for pagination
+      const totalKost = await Kost.countDocuments({ userRef: req.params.id });
+
+      // Calculate total pages
+      const totalPages = Math.ceil(totalKost / limit);
+
+      res.status(200).json({
+        data: kost, // The kost data for the current page
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalKost,
+        },
+      });
     } catch (error) {
-      console.error("Delete user error:", error);
+      console.error("Error fetching user kost:", error);
       res.status(500).json({
         success: false,
         message: "Server Error",
         error: error.message,
       });
     }
+  } else {
+    res.status(401).json({ message: "Unauthorized" });
   }
 };

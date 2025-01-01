@@ -12,12 +12,31 @@ import {
 } from "../redux/favorite/favoriteSlice";
 import { autoLogout } from "../redux/user/userSlice";
 import Swal from "sweetalert2";
-
-const KostCard = ({ item, isMyKostList }) => {
+import ModernToggle from "./ModernToggle";
+import { useState } from "react";
+``;
+const KostCard = ({ item: initialItem, isMyKostList }) => {
+  const [item, setItem] = useState(initialItem);
+  const [isUpdating, setIsUpdating] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isFavorite = useSelector((state) => selectIsFavorite(state, item._id));
   const currentUser = useSelector((state) => state.user.currentUser);
+
+  const showToast = (icon, title) => {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+
+    Toast.fire({
+      icon,
+      title,
+    });
+  };
 
   const handleAddToFavorite = (e) => {
     e.preventDefault();
@@ -33,10 +52,69 @@ const KostCard = ({ item, isMyKostList }) => {
       return;
     }
 
-    if (isFavorite) {
-      dispatch(removeFromFavorites(item._id));
-    } else {
-      dispatch(addToFavorites(item._id));
+    try {
+      if (isFavorite) {
+        dispatch(removeFromFavorites(item._id));
+        showToast("success", "Dihapus dari favorit");
+      } else {
+        dispatch(addToFavorites(item._id));
+        showToast("success", "Ditambahkan ke favorit");
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      showToast("error", "Gagal memperbarui favorit");
+    }
+  };
+
+  const handleAvailabilityToggle = async (checked) => {
+    try {
+      setIsUpdating(true);
+
+      const response = await fetch(`/api/kost/update/${item._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          availability: checked,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update availability");
+      }
+
+      setItem((prev) => ({
+        ...prev,
+        availability: checked,
+      }));
+
+      showToast(
+        "success",
+        `Kost telah ${checked ? "diaktifkan" : "dinonaktifkan"}`,
+      );
+    } catch (error) {
+      console.error("Error updating availability:", error);
+
+      showToast("error", "Gagal memperbarui status");
+
+      setItem((prev) => ({
+        ...prev,
+        availability: !checked,
+      }));
+
+      if (
+        error.message?.includes("unauthorized") ||
+        error.message?.includes("session")
+      ) {
+        dispatch(autoLogout());
+        navigate("/sign-in");
+      }
+    } finally {
+      setIsUpdating(false);
+      console.log(item.availability);
     }
   };
 
@@ -153,14 +231,43 @@ const KostCard = ({ item, isMyKostList }) => {
       transition={{ duration: 0.3 }}
       className="kost-card flex h-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-md transition-transform duration-300 hover:-translate-y-0.5"
     >
-      {/* Image Section */}
-      <Link to={`/kost/${item._id}`} className="block">
-        <img
-          src={item?.imageUrls[0] || gambarKost}
-          alt={item?.name || "Kost"}
-          className="kost-card-image h-48 w-full object-cover"
-        />
-      </Link>
+      {/* Image Section with Availability Toggle */}
+      <div className="relative">
+        <Link
+          to={`/kost/${item._id}`}
+          className="block transition-colors duration-300"
+        >
+          <motion.div
+            animate={{
+              filter: !item.availability ? "grayscale(100%)" : "grayscale(0%)",
+              opacity: !item.availability ? 0.8 : 1,
+            }}
+            transition={{ duration: 0.5 }}
+            className="relative"
+          >
+            <img
+              src={item?.imageUrls[0] || gambarKost}
+              alt={item?.name || "Kost"}
+              className="kost-card-image h-48 w-full object-cover"
+            />
+          </motion.div>
+        </Link>
+        {isMyKostList && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute right-2 top-2 flex items-center gap-2 rounded-full bg-white/90 p-2 shadow-lg backdrop-blur-sm"
+          >
+            <ModernToggle
+              checked={item.availability}
+              onChange={handleAvailabilityToggle}
+              label={item.availability ? "Tersedia" : "Tidak Tersedia"}
+              size="small"
+              disabled={isUpdating}
+            />
+          </motion.div>
+        )}
+      </div>
 
       {/* Content Section */}
       <div className="kost-card-content flex flex-grow flex-col p-5">

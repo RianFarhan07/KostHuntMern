@@ -1,10 +1,8 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { FiLoader } from "react-icons/fi";
 import KostCard from "../components/KostCard";
 import CustomButton from "../components/CustomButton";
-import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import { autoLogout } from "../redux/user/userSlice";
@@ -16,20 +14,24 @@ const MyKostList = () => {
   const [userKost, setUserKost] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 9;
   const dispatch = useDispatch();
 
   useEffect(() => {
     fetchKost();
-  }, []);
+  }, [currentPage]);
 
   const fetchKost = async () => {
     try {
       setLoading(true);
       setError(false);
-      const res = await fetch(`/api/user/kost/${currentUser._id}`);
+      const res = await fetch(
+        `/api/user/kost/${currentUser._id}?page=${currentPage}&limit=${itemsPerPage}`,
+      );
+
       if (res.status === 401) {
-        const errorData = await res.json(); // Parse JSON responsenya
+        const errorData = await res.json();
         Swal.fire({
           icon: "error",
           title: "Unauthorized",
@@ -40,32 +42,23 @@ const MyKostList = () => {
         dispatch(autoLogout());
         return;
       }
-      const data = await res.json();
-      console.log(data);
 
+      const data = await res.json();
       if (data.success === false) {
         setError(true);
         return;
       }
 
-      setUserKost(data);
+      setUserKost(data.data);
+      setTotalPages(data.pagination.totalPages);
     } catch (error) {
-      console.log(error.message);
+      console.error("Error fetching kost data:", error);
       setError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate total pages
-  const totalPages = Math.ceil(userKost.length / itemsPerPage);
-
-  // Get current items
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = userKost.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Handle page changes
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -104,10 +97,9 @@ const MyKostList = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header with Create Button */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Daftar Kost Saya</h1>
-        <Link to={"/addKost"}>
+        <Link to="/addKost">
           <CustomButton>
             <FaPlus className="mr-2 h-4 w-4" />
             Tambah Kost
@@ -115,35 +107,39 @@ const MyKostList = () => {
         </Link>
       </div>
 
-      {/* Kost Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {currentItems.map((kost, index) => (
-          <KostCard key={index} item={kost} isMyKostList={true} />
-        ))}
+        {userKost.length > 0 ? (
+          userKost.map((kost) => (
+            <KostCard key={kost._id} item={kost} isMyKostList={true} />
+          ))
+        ) : (
+          <p className="col-span-3 text-center">Tidak ada kost yang tersedia</p>
+        )}
       </div>
 
-      {/* Pagination */}
-      <div className="mt-8 flex justify-center gap-4">
-        <CustomButton
-          onClick={prevPage}
-          disabled={currentPage === 1}
-          variant="outline"
-        >
-          <FaChevronLeft className="mr-2 h-4 w-4" />
-          Previous
-        </CustomButton>
-        <span className="flex items-center">
-          Page {currentPage} of {totalPages}
-        </span>
-        <CustomButton
-          onClick={nextPage}
-          disabled={currentPage === totalPages}
-          variant="outline"
-        >
-          Next
-          <FaChevronRight className="ml-2 h-4 w-4" />
-        </CustomButton>
-      </div>
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center gap-4">
+          <CustomButton
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            variant="outline"
+          >
+            <FaChevronLeft className="mr-2 h-4 w-4" />
+            Previous
+          </CustomButton>
+          <span className="flex items-center">
+            Page {currentPage} of {totalPages}
+          </span>
+          <CustomButton
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            variant="outline"
+          >
+            Next
+            <FaChevronRight className="ml-2 h-4 w-4" />
+          </CustomButton>
+        </div>
+      )}
     </div>
   );
 };

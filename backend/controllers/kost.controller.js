@@ -52,11 +52,11 @@ export const updateKost = async (req, res) => {
       city,
       price,
       originalPrice,
-      facilites,
+      facilities,
       type,
       availability,
       contact,
-      imgaeUrls,
+      imageUrls,
     } = req.body;
 
     const kost = await Kost.findById(id);

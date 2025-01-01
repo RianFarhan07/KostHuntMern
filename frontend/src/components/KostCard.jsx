@@ -40,10 +40,10 @@ const KostCard = ({ item, isMyKostList }) => {
     }
   };
 
-  const handleEdit = (e) => {
-    e.preventDefault();
-    navigate(`update-kost/${item._id}`);
-  };
+  // const handleEdit = (e) => {
+  //   e.preventDefault();
+  //   navigate(`update-kost/${item._id}`);
+  // };
 
   const handleDelete = () => {
     //handle Delete
@@ -166,15 +166,16 @@ const KostCard = ({ item, isMyKostList }) => {
           {/* Conditional rendering for MyKostList buttons */}
           {isMyKostList ? (
             <div className="ml-auto flex gap-2">
-              <motion.button
-                onClick={handleEdit}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="rounded bg-yellow-500 p-2 text-white transition-colors hover:bg-yellow-600"
-                title="Edit"
-              >
-                <FaEdit className="h-5 w-5" />
-              </motion.button>
+              <Link to={`/update-kost/${item._id}`}>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="rounded bg-yellow-500 p-2 text-white transition-colors hover:bg-yellow-600"
+                  title="Edit"
+                >
+                  <FaEdit className="h-5 w-5" />
+                </motion.button>
+              </Link>
               <motion.button
                 onClick={handleDelete}
                 whileHover={{ scale: 1.05 }}

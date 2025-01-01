@@ -98,7 +98,11 @@ const KostCard = ({ item }) => {
         {/* Location */}
         <div className="kost-card-location mb-3 flex items-center text-gray-600">
           <FaMapMarkedAlt className="mr-2 h-4 w-4 text-primary" />
-          <span>{item?.location || "Lokasi tidak tersedia"}</span>
+          <span>
+            {item?.location && item?.city
+              ? `${item.location}, ${item.city}`
+              : "Lokasi tidak tersedia"}
+          </span>
         </div>
 
         {/* Price */}
@@ -121,7 +125,7 @@ const KostCard = ({ item }) => {
 
         {/* Facilities */}
         <div className="kost-card-facilities mb-4 flex flex-wrap gap-2">
-          {item.facilities?.map((facility, index) => (
+          {item.facilities?.slice(0, 6).map((facility, index) => (
             <span
               key={index}
               className="facility-tag rounded-full bg-primary px-3 py-1 text-xs text-white"
@@ -129,6 +133,13 @@ const KostCard = ({ item }) => {
               {facility}
             </span>
           ))}
+          {item.facilities?.length > 6 && (
+            <div className="flex items-center rounded-full bg-primary px-3 py-1.5">
+              <span className="text-xs font-medium text-white">
+                +{item.facilities.length - 6} fasilitas lainnya
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Actions */}

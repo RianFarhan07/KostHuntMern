@@ -28,13 +28,6 @@ const MyKostList = () => {
       setLoading(true);
       setError(false);
       const res = await fetch(`/api/user/kost/${currentUser._id}`);
-      const data = await res.json();
-
-      if (data.success === false) {
-        setError(true);
-        return;
-      }
-
       if (res.status === 401) {
         const errorData = await res.json(); // Parse JSON responsenya
         Swal.fire({
@@ -45,6 +38,13 @@ const MyKostList = () => {
             "Your session has expired. Please log in again.",
         });
         dispatch(autoLogout());
+        return;
+      }
+      const data = await res.json();
+      console.log(data);
+
+      if (data.success === false) {
+        setError(true);
         return;
       }
 

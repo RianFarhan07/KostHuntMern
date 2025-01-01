@@ -209,6 +209,7 @@ export const getRandomKost = async (req, res) => {
         $project: {
           name: 1,
           location: 1,
+          city: 1,
           price: 1,
           originalPrice: 1,
           facilities: 1,

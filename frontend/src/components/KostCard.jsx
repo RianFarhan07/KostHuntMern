@@ -40,13 +40,78 @@ const KostCard = ({ item, isMyKostList }) => {
     }
   };
 
-  // const handleEdit = (e) => {
-  //   e.preventDefault();
-  //   navigate(`update-kost/${item._id}`);
-  // };
+  const handleDelete = async (kostId) => {
+    try {
+      // First show confirmation dialog
+      const result = await Swal.fire({
+        title: "Apakah anda yakin?",
+        text: "Data kost yang dihapus tidak dapat dikembalikan!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      });
 
-  const handleDelete = () => {
-    //handle Delete
+      // If user confirms deletion
+      if (result.isConfirmed) {
+        // Show loading state
+        Swal.fire({
+          title: "Menghapus...",
+          text: "Mohon tunggu sebentar",
+          allowOutsideClick: false,
+          showConfirmButton: false,
+          willOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
+        // Make delete request
+        const response = await fetch(`/api/kost/delete/${kostId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important for sending cookies
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to delete kost");
+        }
+
+        // Show success message
+        await Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Data kost telah dihapus",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        // Optional: Refresh the page or update the UI
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error deleting kost:", error);
+
+      // Show error message
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal menghapus kost",
+        text: error.message || "Terjadi kesalahan saat menghapus data kost",
+      });
+
+      // If error is due to unauthorized access, redirect to login
+      if (
+        error.message?.includes("unauthorized") ||
+        error.message?.includes("session")
+      ) {
+        dispatch(autoLogout());
+        navigate("/sign-in");
+      }
+    }
   };
 
   const buttonVariants = {
@@ -177,7 +242,9 @@ const KostCard = ({ item, isMyKostList }) => {
                 </motion.button>
               </Link>
               <motion.button
-                onClick={handleDelete}
+                onClick={() => {
+                  handleDelete(item._id);
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="rounded bg-red-500 p-2 text-white transition-colors hover:bg-red-600"

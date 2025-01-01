@@ -118,7 +118,7 @@ const MyKostList = () => {
       {/* Kost Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {currentItems.map((kost, index) => (
-          <KostCard key={index} item={kost} />
+          <KostCard key={index} item={kost} isMyKostList={true} />
         ))}
       </div>
 

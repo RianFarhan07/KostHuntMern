@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { FaHeart, FaMapMarkedAlt } from "react-icons/fa";
+import { FaEdit, FaHeart, FaMapMarkedAlt, FaTrash } from "react-icons/fa";
 import gambarKost from "../assets/default/kostDefault.jpg";
 import "../styles/section.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,7 +13,7 @@ import {
 import { autoLogout } from "../redux/user/userSlice";
 import Swal from "sweetalert2";
 
-const KostCard = ({ item }) => {
+const KostCard = ({ item, isMyKostList }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isFavorite = useSelector((state) => selectIsFavorite(state, item._id));
@@ -38,6 +38,15 @@ const KostCard = ({ item }) => {
     } else {
       dispatch(addToFavorites(item._id));
     }
+  };
+
+  const handleEdit = (e) => {
+    e.preventDefault();
+    navigate(`update-kost/${item._id}`);
+  };
+
+  const handleDelete = () => {
+    //handle Delete
   };
 
   const buttonVariants = {
@@ -153,39 +162,64 @@ const KostCard = ({ item }) => {
               Lihat Detail
             </motion.button>
           </Link>
-          <motion.button
-            onClick={handleAddToFavorite}
-            variants={buttonVariants}
-            animate={isFavorite ? "favorite" : "unfavorite"}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className={`group ml-auto rounded-full border p-2 transition-all duration-300 ${
-              isFavorite
-                ? "border-primary bg-primary hover:border-white"
-                : "border-blue-200 hover:border-primary"
-            }`}
-            aria-label={
-              isFavorite ? "Remove from favorites" : "Add to favorites"
-            }
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={isFavorite ? "favorite" : "unfavorite"}
-                variants={heartVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
+
+          {/* Conditional rendering for MyKostList buttons */}
+          {isMyKostList ? (
+            <div className="ml-auto flex gap-2">
+              <motion.button
+                onClick={handleEdit}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="rounded bg-yellow-500 p-2 text-white transition-colors hover:bg-yellow-600"
+                title="Edit"
               >
-                <FaHeart
-                  className={`h-5 w-5 transition-colors duration-300 ${
-                    isFavorite
-                      ? "text-white group-hover:border-white"
-                      : "text-primary"
-                  }`}
-                />
-              </motion.div>
-            </AnimatePresence>
-          </motion.button>
+                <FaEdit className="h-5 w-5" />
+              </motion.button>
+              <motion.button
+                onClick={handleDelete}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="rounded bg-red-500 p-2 text-white transition-colors hover:bg-red-600"
+                title="Delete"
+              >
+                <FaTrash className="h-5 w-5" />
+              </motion.button>
+            </div>
+          ) : (
+            <motion.button
+              onClick={handleAddToFavorite}
+              variants={buttonVariants}
+              animate={isFavorite ? "favorite" : "unfavorite"}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className={`group ml-auto rounded-full border p-2 transition-all duration-300 ${
+                isFavorite
+                  ? "border-primary bg-primary hover:border-white"
+                  : "border-blue-200 hover:border-primary"
+              }`}
+              aria-label={
+                isFavorite ? "Remove from favorites" : "Add to favorites"
+              }
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={isFavorite ? "favorite" : "unfavorite"}
+                  variants={heartVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <FaHeart
+                    className={`h-5 w-5 transition-colors duration-300 ${
+                      isFavorite
+                        ? "text-white group-hover:border-white"
+                        : "text-primary"
+                    }`}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>

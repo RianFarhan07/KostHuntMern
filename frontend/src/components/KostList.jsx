@@ -72,7 +72,7 @@ const KostList = () => {
         </div>
         <div className="grid grid-cols-1 gap-8 py-5 md:grid-cols-2 lg:grid-cols-3">
           {kost.map((item) => (
-            <KostCard key={item._id} item={item} />
+            <KostCard key={item._id} item={item} isMyKostList={false} />
           ))}
         </div>
         {/* Empty State */}

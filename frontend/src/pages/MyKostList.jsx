@@ -95,6 +95,8 @@ const MyKostList = () => {
     );
   }
 
+  const showPagination = userKost.length > 0 && totalPages > 1;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -117,12 +119,17 @@ const MyKostList = () => {
         )}
       </div>
 
-      {totalPages > 1 && (
+      {showPagination && (
         <div className="mt-8 flex justify-center gap-4">
           <CustomButton
             onClick={prevPage}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || userKost.length === 0}
             variant="outline"
+            className={`${
+              currentPage === 1 || userKost.length === 0
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            }`}
           >
             <FaChevronLeft className="mr-2 h-4 w-4" />
             Previous
@@ -132,8 +139,13 @@ const MyKostList = () => {
           </span>
           <CustomButton
             onClick={nextPage}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || userKost.length === 0}
             variant="outline"
+            className={`${
+              currentPage === totalPages || userKost.length === 0
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            }`}
           >
             Next
             <FaChevronRight className="ml-2 h-4 w-4" />

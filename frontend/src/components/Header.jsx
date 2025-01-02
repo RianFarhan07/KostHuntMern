@@ -51,6 +51,7 @@ const Header = () => {
   };
 
   const navigationLinks = [
+    { name: "Home", href: "/" },
     { name: "Profile", href: "/profile" },
     { name: "My Kost", href: "/my-kost" },
     { name: "Stats", href: "/stats" },

@@ -55,7 +55,7 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
     try {
       if (isFavorite) {
         dispatch(removeFromFavorites(item._id));
-        showToast("success", "Dihapus dari favorit");
+        showToast("info", "Dihapus dari favorit");
       } else {
         dispatch(addToFavorites(item._id));
         showToast("success", "Ditambahkan ke favorit");

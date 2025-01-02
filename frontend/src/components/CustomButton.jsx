@@ -17,7 +17,7 @@ const CustomButton = ({
     primary:
       "bg-primary hover:bg-primaryVariant text-white disabled:bg-blue-300",
     outline:
-      "border border-gray-300 hover:bg-gray-50 text-gray-700 disabled:bg-gray-100",
+      "border border-gray-300 hover:bg-primary text-gray-700 disabled:bg-slate-100",
     danger: "bg-red-600 hover:bg-red-700 text-white disabled:bg-red-300",
     success: "bg-green-600 hover:bg-green-700 text-white disabled:bg-green-300",
   };

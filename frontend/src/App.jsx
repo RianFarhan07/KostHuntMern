@@ -9,6 +9,7 @@ import PrivateRoutes from "./components/PrivateRoutes";
 import MyKostList from "./pages/MyKostList";
 import AddKost from "./pages/AddKost";
 import UpdateKost from "./pages/UpdateKost";
+import Kost from "./pages/Kost";
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/sign-in" element={<Signin />} />
         <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/kost/:id" element={<Kost />} />
 
         <Route element={<PrivateRoutes />}>
           <Route path="/my-kost" element={<MyKostList />} />

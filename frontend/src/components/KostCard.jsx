@@ -252,7 +252,7 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
             />
           </motion.div>
         </Link>
-        {isMyKostList && (
+        {isMyKostList ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -266,15 +266,40 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
               disabled={isUpdating}
             />
           </motion.div>
+        ) : (
+          <div className="absolute right-2 top-2">
+            {item.availability ? (
+              <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
+                Penuh
+              </span>
+            ) : (
+              <span className="shrink-0 rounded bg-primary px-2 py-1 text-xs font-medium text-white">
+                {item.type}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
       {/* Content Section */}
       <div className="kost-card-content flex flex-grow flex-col p-5">
-        {/* Title */}
-        <h3 className="kost-card-title mb-2 text-xl font-semibold text-gray-800">
-          {item?.name || "Nama Kost"}
-        </h3>
+        {/* Title Section with Dynamic Status */}
+        <div className="mb-2 flex items-center gap-2">
+          <h3 className="kost-card-title flex-1 truncate text-xl font-semibold text-gray-800">
+            {item?.name || "Nama Kost"}
+          </h3>
+          <motion.span
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className={`rounded px-2 py-1 text-xs font-medium ${
+              item.availability
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {item.availability ? "Tersedia" : "Penuh"}
+          </motion.span>
+        </div>
 
         {/* Location */}
         <div className="kost-card-location mb-3 flex items-center text-gray-600">
@@ -306,7 +331,7 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
 
         {/* Facilities */}
         <div className="kost-card-facilities mb-4 flex flex-wrap gap-2">
-          {item.facilities?.slice(0, 6).map((facility, index) => (
+          {item.facilities?.slice(0, 4).map((facility, index) => (
             <span
               key={index}
               className="facility-tag rounded-full bg-primary px-3 py-1 text-xs text-white"
@@ -314,10 +339,10 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
               {facility}
             </span>
           ))}
-          {item.facilities?.length > 6 && (
+          {item.facilities?.length > 4 && (
             <div className="flex items-center rounded-full bg-primary px-3 py-1.5">
               <span className="text-xs font-medium text-white">
-                +{item.facilities.length - 6} fasilitas lainnya
+                +{item.facilities.length - 4} fasilitas lainnya
               </span>
             </div>
           )}

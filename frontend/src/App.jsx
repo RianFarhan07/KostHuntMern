@@ -10,6 +10,7 @@ import MyKostList from "./pages/MyKostList";
 import AddKost from "./pages/AddKost";
 import UpdateKost from "./pages/UpdateKost";
 import Kost from "./pages/Kost";
+import Search from "./pages/Search";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route path="/sign-in" element={<Signin />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/kost/:id" element={<Kost />} />
+        <Route path="/search" element={<Search />} />
 
         <Route element={<PrivateRoutes />}>
           <Route path="/my-kost" element={<MyKostList />} />

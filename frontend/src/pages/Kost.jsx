@@ -162,22 +162,35 @@ const Kost = () => {
             <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Informasi Kontak</h2>
               <a
-                href={`tel:${kost.contact.phone}`}
-                className="mb-3 flex items-center gap-3 rounded-lg border p-4 transition hover:bg-gray-50"
+                href={`tel:${kost.contact?.phone}`}
+                className="mb-3 flex w-full items-center gap-3 rounded-lg border bg-primary p-3 text-white transition hover:bg-primaryVariant"
               >
-                <FaPhone className="text-blue-500" />
-                <span>{kost.contact.phone}</span>
+                <FaPhone className="text-white" />
+                <span>{kost.contact?.phone}</span>
               </a>
               <a
-                href={`https://wa.me/${kost.contact.whatsapp}`}
+                href={`https://wa.me/${kost.contact?.whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-lg border p-4 transition hover:bg-gray-50"
+                className="flex w-full items-center gap-3 rounded-lg bg-green-500 p-3 text-white transition-colors hover:bg-green-600"
               >
-                <FaWhatsapp className="text-green-500" />
+                <FaWhatsapp className="text-white" />
                 <span>Chat di WhatsApp</span>
               </a>
             </div>
+
+            {/* <a
+            href={`tel:${kost.contact?.phone}`}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary p-2 text-sm text-white transition-colors hover:bg-primaryVariant"
+          >
+            <FaPhone /> Telepon
+          </a>
+          <a
+            href={`https://wa.me/${kost.contact?.whatsapp}`}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 p-2 text-sm text-white transition-colors hover:bg-green-600"
+          >
+            <FaWhatsapp /> WhatsApp
+          </a> */}
 
             <div className="mt-6 rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Detail Properti</h2>

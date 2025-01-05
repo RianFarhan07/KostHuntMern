@@ -3,12 +3,14 @@ import KostCard from "./KostCard";
 import "../styles/section.css";
 import { FiLoader } from "react-icons/fi";
 import CustomButton from "./CustomButton";
+import { useNavigate } from "react-router-dom";
 
 const KostList = () => {
   // Sample data - you can replace this with your actual data source
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [kost, setKost] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchKost();
@@ -33,6 +35,10 @@ const KostList = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSeeMore = () => {
+    navigate("/search");
   };
 
   if (loading) {
@@ -69,6 +75,11 @@ const KostList = () => {
             Pilihan <span>Kost</span>
           </h2>
           <div className="header-line"></div>
+        </div>
+        <div className="flex justify-end">
+          <CustomButton onClick={handleSeeMore} className="px-4 py-2 text-sm">
+            Lihat Lebih Banyak
+          </CustomButton>
         </div>
         <div className="grid grid-cols-1 gap-8 py-5 md:grid-cols-2 lg:grid-cols-3">
           {kost.map((item) => (

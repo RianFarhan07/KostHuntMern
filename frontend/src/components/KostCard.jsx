@@ -268,15 +268,9 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
           </motion.div>
         ) : (
           <div className="absolute right-2 top-2">
-            {item.availability ? (
-              <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
-                Penuh
-              </span>
-            ) : (
-              <span className="shrink-0 rounded bg-primary px-2 py-1 text-xs font-medium text-white">
-                {item.type}
-              </span>
-            )}
+            <span className="shrink-0 rounded bg-primary px-2 py-1 text-xs font-medium text-white">
+              {item.type}
+            </span>
           </div>
         )}
       </div>

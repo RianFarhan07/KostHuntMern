@@ -65,56 +65,11 @@ const Search = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const searchTermFromUrl = urlParams.get("searchTerm");
-    const typeFromUrl = urlParams.get("type");
-    const availabilityFromUrl = urlParams.get("availability");
-    const facilitiesFromUrl = urlParams
-      .get("facilities")
-      ?.split(",")
-      .filter(Boolean);
-    const locationFromUrl = urlParams.get("location");
-    const cityFromUrl = urlParams.get("city");
-    const sortFromUrl = urlParams.get("sort");
-    const orderFromUrl = urlParams.get("order");
-    const pageFromUrl = urlParams.get("page");
-    const limitFromUrl = urlParams.get("limit");
-
-    if (
-      searchTermFromUrl ||
-      typeFromUrl ||
-      availabilityFromUrl ||
-      facilitiesFromUrl?.length > 0 ||
-      locationFromUrl ||
-      cityFromUrl ||
-      sortFromUrl ||
-      orderFromUrl ||
-      pageFromUrl ||
-      limitFromUrl
-    ) {
-      setSearchParams({
-        searchTerm: searchTermFromUrl || "",
-        type: typeFromUrl || "all",
-        availability: availabilityFromUrl === "true" ? true : undefined,
-        facilities: facilitiesFromUrl || [],
-        location: locationFromUrl || "",
-        city: cityFromUrl || "",
-        sort: sortFromUrl || "createdAt",
-        order: orderFromUrl || "desc",
-        page: parseInt(pageFromUrl) || 1,
-        limit: parseInt(limitFromUrl) || 9,
-      });
-    }
-
-    fetchKosts();
-  }, [location.search]);
-
-  const fetchKosts = async () => {
+  const fetchKosts = async (params) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
-      Object.entries(searchParams).forEach(([key, value]) => {
+      Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== "") {
           if (key === "facilities" && value.length > 0) {
             queryParams.set(key, value.join(","));
@@ -134,54 +89,68 @@ const Search = () => {
       }
 
       const data = await response.json();
-      // Update to handle new response structure
       setKosts(data.data);
-      console.log(data.data);
-
       setPagination({
-        currentPage: data.pagination.currentPage,
+        currentPage: parseInt(params.page), // Use the params page instead of data.pagination
         totalPages: data.pagination.totalPages,
         totalItems: data.pagination.totalItems,
       });
     } catch (error) {
       console.error("Error fetching kosts:", error);
+      setKosts([]);
+      setPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const newParams = {
+      searchTerm: urlParams.get("searchTerm") || "",
+      type: urlParams.get("type") || "all",
+      availability:
+        urlParams.get("availability") === "true"
+          ? true
+          : urlParams.get("availability") === "false"
+            ? false
+            : undefined,
+      facilities: urlParams.get("facilities")?.split(",").filter(Boolean) || [],
+      location: urlParams.get("location") || "",
+      city: urlParams.get("city") || "",
+      sort: urlParams.get("sort") || "createdAt",
+      order: urlParams.get("order") || "desc",
+      page: parseInt(urlParams.get("page")) || 1,
+      limit: parseInt(urlParams.get("limit")) || 9,
+    };
+
+    setSearchParams(newParams);
+    fetchKosts(newParams);
+  }, [location.search]);
+
   const handleChange = (e) => {
     const { id, value } = e.target;
+    setSearchParams((prev) => {
+      const updates = { ...prev };
 
-    if (id === "searchTerm" || id === "location" || id === "city") {
-      setSearchParams((prev) => ({
-        ...prev,
-        [id]: value,
-      }));
-    }
+      if (id === "sort_order") {
+        const [sort, order] = value.split("_");
+        updates.sort = sort;
+        updates.order = order;
+      } else if (id === "availability") {
+        updates.availability = value === "" ? undefined : value === "true";
+      } else {
+        updates[id] = value;
+      }
 
-    if (id === "type") {
-      setSearchParams((prev) => ({
-        ...prev,
-        type: value,
-      }));
-    }
-
-    if (id === "availability") {
-      setSearchParams((prev) => ({
-        ...prev,
-        availability: value === "" ? undefined : value === "true",
-      }));
-    }
-
-    if (id === "sort_order") {
-      const [sort, order] = value.split("_");
-      setSearchParams((prev) => ({
-        ...prev,
-        sort,
-        order,
-      }));
-    }
+      // Reset page to 1 when changing filters
+      updates.page = 1;
+      return updates;
+    });
   };
 
   const handleFacilityChange = (facility, checked) => {
@@ -190,6 +159,7 @@ const Search = () => {
       facilities: checked
         ? [...prev.facilities, facility]
         : prev.facilities.filter((f) => f !== facility),
+      page: 1,
     }));
   };
 
@@ -206,14 +176,17 @@ const Search = () => {
       }
     });
 
-    // Reset to page 1 when submitting a new search
-    urlParams.set("page", "1");
     navigate(`/search?${urlParams.toString()}`);
   };
 
   const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+
+    // Create new URLSearchParams from current location
     const urlParams = new URLSearchParams(location.search);
-    urlParams.set("page", newPage);
+    // Update page parameter
+    urlParams.set("page", newPage.toString());
+    // Navigate with all current parameters plus new page
     navigate(`/search?${urlParams.toString()}`);
   };
 
@@ -221,6 +194,7 @@ const Search = () => {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
+
     let startPage = Math.max(
       1,
       pagination.currentPage - Math.floor(maxVisiblePages / 2),
@@ -234,12 +208,22 @@ const Search = () => {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) pages.push("...");
+    }
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
+
+    if (endPage < pagination.totalPages) {
+      if (endPage < pagination.totalPages - 1) pages.push("...");
+      pages.push(pagination.totalPages);
+    }
+
     return pages;
   };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-8">
@@ -426,20 +410,25 @@ const Search = () => {
                 >
                   <FaChevronLeft className="text-gray-600" />
                 </button>
-
-                {getPageNumbers().map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
-                      pageNum === pagination.currentPage
-                        ? "bg-primary text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
+                {getPageNumbers().map((pageNum, index) =>
+                  pageNum === "..." ? (
+                    <span key={`ellipsis-${index}`} className="px-2">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
+                        pageNum === pagination.currentPage
+                          ? "bg-primary text-white"
+                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ),
+                )}
 
                 <button
                   onClick={() => handlePageChange(pagination.currentPage + 1)}

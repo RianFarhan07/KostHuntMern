@@ -7,6 +7,7 @@ import {
   FaFilter,
   FaChevronLeft,
   FaChevronRight,
+  FaTimes,
 } from "react-icons/fa";
 import KostCard from "../components/KostCard";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -38,6 +39,20 @@ const FACILITIES = [
   "Taman",
   "Free Maintenance",
 ];
+
+// Default search parameters
+const DEFAULT_SEARCH_PARAMS = {
+  searchTerm: "",
+  type: "all",
+  availability: undefined,
+  facilities: [],
+  location: "",
+  city: "",
+  sort: "createdAt",
+  order: "desc",
+  page: 1,
+  limit: 9,
+};
 
 const Search = () => {
   const [searchParams, setSearchParams] = useState({
@@ -224,6 +239,26 @@ const Search = () => {
 
     return pages;
   };
+
+  const handleClearFilters = () => {
+    setSearchParams(DEFAULT_SEARCH_PARAMS);
+    navigate("/search");
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      searchParams.searchTerm !== DEFAULT_SEARCH_PARAMS.searchTerm ||
+      searchParams.type !== DEFAULT_SEARCH_PARAMS.type ||
+      searchParams.availability !== DEFAULT_SEARCH_PARAMS.availability ||
+      searchParams.facilities.length > 0 ||
+      searchParams.location !== DEFAULT_SEARCH_PARAMS.location ||
+      searchParams.city !== DEFAULT_SEARCH_PARAMS.city ||
+      searchParams.sort !== DEFAULT_SEARCH_PARAMS.sort ||
+      searchParams.order !== DEFAULT_SEARCH_PARAMS.order
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-8">
@@ -238,7 +273,7 @@ const Search = () => {
               <input
                 type="text"
                 id="searchTerm"
-                placeholder="Cari kost berdasarkan nama atau lokasi..."
+                placeholder="Cari kost berdasarkan nama kost..."
                 className="w-full bg-transparent p-4 text-gray-800 placeholder-gray-500 outline-none"
                 value={searchParams.searchTerm}
                 onChange={handleChange}
@@ -264,19 +299,30 @@ const Search = () => {
           </form>
         </div>
 
-        {/* Filters Toggle */}
+        {/* Filters Toggle with Clear Filters Button */}
         <div className="mb-6">
-          <button
-            type="button"
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            className="flex w-full items-center justify-between rounded-xl bg-white p-4 text-gray-800 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div className="flex items-center gap-3">
-              <FaFilter className="text-primary" />
-              <span className="font-semibold">Filter Pencarian</span>
-            </div>
-            {isFiltersOpen ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
+          <div className="flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+              className="flex flex-1 items-center justify-between rounded-xl bg-white p-4 text-gray-800 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="flex items-center gap-3">
+                <FaFilter className="text-primary" />
+                <span className="font-semibold">Filter Pencarian</span>
+              </div>
+              {isFiltersOpen ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+            {hasActiveFilters() && (
+              <button
+                onClick={handleClearFilters}
+                className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-red-600 transition-colors hover:bg-red-100"
+              >
+                <FaTimes />
+                <span>Hapus Filter</span>
+              </button>
+            )}
+          </div>
 
           {isFiltersOpen && (
             <div className="mt-4 space-y-6 rounded-xl bg-white p-6 shadow-sm">

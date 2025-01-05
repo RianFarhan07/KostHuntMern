@@ -2,254 +2,459 @@ import React, { useState, useEffect } from "react";
 import {
   FaSearch,
   FaMapMarkerAlt,
-  FaHome,
-  FaUsers,
-  FaStar,
-  FaWhatsapp,
-  FaPhone,
+  FaChevronDown,
+  FaChevronUp,
+  FaFilter,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
+import KostCard from "../components/KostCard";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const KostSearch = () => {
+const FACILITIES = [
+  "WiFi",
+  "AC",
+  "Kamar Mandi Dalam",
+  "Kasur",
+  "Meja",
+  "Lemari",
+  "Dapur",
+  "Parkir Motor",
+  "Parkir Mobil",
+  "Security",
+  "CCTV",
+  "TV",
+  "Kulkas",
+  "Laundry",
+  "Dapur Bersama",
+  "Ruang Tamu",
+  "Air Panas",
+  "Peralatan Masak",
+  "Dispenser",
+  "Cleaning Service",
+  "Musholla",
+  "Jemuran",
+  "Gazebo",
+  "Taman",
+  "Free Maintenance",
+];
+
+const Search = () => {
   const [searchParams, setSearchParams] = useState({
     searchTerm: "",
     type: "all",
-    priceMin: "",
-    priceMax: "",
-    city: "",
+    availability: undefined,
     facilities: [],
-    sort: "newest",
+    location: "",
+    city: "",
+    sort: "createdAt",
+    order: "desc",
+    page: 1,
+    limit: 9,
   });
 
   const [loading, setLoading] = useState(false);
   const [kosts, setKosts] = useState([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+  });
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  const facilities = [
-    "WiFi",
-    "AC",
-    "Kamar Mandi Dalam",
-    "Dapur",
-    "Laundry",
-    "Parkir Motor",
-  ];
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // Implement search functionality here
-    console.log("Search params:", searchParams);
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const searchTermFromUrl = urlParams.get("searchTerm");
+    const typeFromUrl = urlParams.get("type");
+    const availabilityFromUrl = urlParams.get("availability");
+    const facilitiesFromUrl = urlParams
+      .get("facilities")
+      ?.split(",")
+      .filter(Boolean);
+    const locationFromUrl = urlParams.get("location");
+    const cityFromUrl = urlParams.get("city");
+    const sortFromUrl = urlParams.get("sort");
+    const orderFromUrl = urlParams.get("order");
+    const pageFromUrl = urlParams.get("page");
+    const limitFromUrl = urlParams.get("limit");
+
+    if (
+      searchTermFromUrl ||
+      typeFromUrl ||
+      availabilityFromUrl ||
+      facilitiesFromUrl?.length > 0 ||
+      locationFromUrl ||
+      cityFromUrl ||
+      sortFromUrl ||
+      orderFromUrl ||
+      pageFromUrl ||
+      limitFromUrl
+    ) {
+      setSearchParams({
+        searchTerm: searchTermFromUrl || "",
+        type: typeFromUrl || "all",
+        availability: availabilityFromUrl === "true" ? true : undefined,
+        facilities: facilitiesFromUrl || [],
+        location: locationFromUrl || "",
+        city: cityFromUrl || "",
+        sort: sortFromUrl || "createdAt",
+        order: orderFromUrl || "desc",
+        page: parseInt(pageFromUrl) || 1,
+        limit: parseInt(limitFromUrl) || 9,
+      });
+    }
+
+    fetchKosts();
+  }, [location.search]);
+
+  const fetchKosts = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams();
+      Object.entries(searchParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") {
+          if (key === "facilities" && value.length > 0) {
+            queryParams.set(key, value.join(","));
+          } else if (key === "availability" && typeof value === "boolean") {
+            queryParams.set(key, value.toString());
+          } else {
+            queryParams.set(key, value);
+          }
+        }
+      });
+
+      const response = await fetch(
+        `/api/kost/getAll?${queryParams.toString()}`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch kosts");
+      }
+
+      const data = await response.json();
+      // Update to handle new response structure
+      setKosts(data.data);
+      console.log(data.data);
+
+      setPagination({
+        currentPage: data.pagination.currentPage,
+        totalPages: data.pagination.totalPages,
+        totalItems: data.pagination.totalItems,
+      });
+    } catch (error) {
+      console.error("Error fetching kosts:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const KostCard = ({ kost }) => (
-    <div className="overflow-hidden rounded-lg bg-white shadow-md transition-all hover:shadow-lg">
-      <div className="relative h-48 overflow-hidden">
-        <img
-          src={kost.imageUrls[0] || "/api/placeholder/400/300"}
-          alt={kost.name}
-          className="h-full w-full object-cover transition-transform hover:scale-110"
-        />
-        <div className="absolute right-2 top-2 rounded bg-primary px-2 py-1 text-sm font-semibold text-onPrimary">
-          {kost.type}
-        </div>
-      </div>
-      <div className="p-4">
-        <h3 className="mb-2 text-lg font-semibold text-onsurface">
-          {kost.name}
-        </h3>
-        <div className="mb-2 flex items-center gap-1 text-gray-600">
-          <FaMapMarkerAlt size={16} />
-          <span className="text-sm">{kost.city}</span>
-        </div>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {kost.facilities.slice(0, 3).map((facility, index) => (
-            <span
-              key={index}
-              className="rounded-full bg-surface px-2 py-1 text-xs text-gray-600"
-            >
-              {facility}
-            </span>
-          ))}
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="text-lg font-bold text-primary">
-            Rp {kost.price.toLocaleString("id-ID")}
-            <span className="text-sm text-gray-500">/bulan</span>
-          </div>
-          {kost.availability ? (
-            <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-              Tersedia
-            </span>
-          ) : (
-            <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
-              Penuh
-            </span>
-          )}
-        </div>
-        <div className="mt-3 flex gap-2">
-          <a
-            href={`tel:${kost.contact?.phone}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary p-2 text-sm text-white transition-colors hover:bg-primaryVariant"
-          >
-            <FaPhone /> Telepon
-          </a>
-          <a
-            href={`https://wa.me/${kost.contact?.whatsapp}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 p-2 text-sm text-white transition-colors hover:bg-green-600"
-          >
-            <FaWhatsapp /> WhatsApp
-          </a>
-        </div>
-      </div>
-    </div>
-  );
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+
+    if (id === "searchTerm" || id === "location" || id === "city") {
+      setSearchParams((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    }
+
+    if (id === "type") {
+      setSearchParams((prev) => ({
+        ...prev,
+        type: value,
+      }));
+    }
+
+    if (id === "availability") {
+      setSearchParams((prev) => ({
+        ...prev,
+        availability: value === "" ? undefined : value === "true",
+      }));
+    }
+
+    if (id === "sort_order") {
+      const [sort, order] = value.split("_");
+      setSearchParams((prev) => ({
+        ...prev,
+        sort,
+        order,
+      }));
+    }
+  };
+
+  const handleFacilityChange = (facility, checked) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      facilities: checked
+        ? [...prev.facilities, facility]
+        : prev.facilities.filter((f) => f !== facility),
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const urlParams = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") {
+        if (key === "facilities" && value.length > 0) {
+          urlParams.set(key, value.join(","));
+        } else {
+          urlParams.set(key, value);
+        }
+      }
+    });
+
+    // Reset to page 1 when submitting a new search
+    urlParams.set("page", "1");
+    navigate(`/search?${urlParams.toString()}`);
+  };
+
+  const handlePageChange = (newPage) => {
+    const urlParams = new URLSearchParams(location.search);
+    urlParams.set("page", newPage);
+    navigate(`/search?${urlParams.toString()}`);
+  };
+
+  // Generate array of page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(
+      1,
+      pagination.currentPage - Math.floor(maxVisiblePages / 2),
+    );
+    let endPage = Math.min(
+      pagination.totalPages,
+      startPage + maxVisiblePages - 1,
+    );
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl p-4">
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Search Header */}
         <div className="mb-8 rounded-lg bg-primary p-6 text-onPrimary shadow-lg">
-          <h1 className="mb-4 text-2xl font-bold">Temukan Kost Impianmu</h1>
-          <form onSubmit={handleSearch} className="flex flex-wrap gap-4">
-            <div className="flex flex-1 items-center rounded-lg bg-white px-4 py-2">
-              <FaSearch className="mr-2 text-gray-400" />
+          <h1 className="mb-6 text-3xl font-bold text-white">
+            Temukan Kost Impianmu
+          </h1>
+          <form onSubmit={handleSubmit} className="flex flex-wrap gap-4">
+            <div className="flex flex-1 items-center overflow-hidden rounded-lg bg-white/90 backdrop-blur-sm transition-colors focus-within:bg-white">
+              <FaSearch className="ml-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Cari kost..."
-                className="w-full bg-transparent focus:outline-none"
+                id="searchTerm"
+                placeholder="Cari kost berdasarkan nama atau lokasi..."
+                className="w-full bg-transparent p-4 text-gray-800 placeholder-gray-500 outline-none"
                 value={searchParams.searchTerm}
-                onChange={(e) =>
-                  setSearchParams((prev) => ({
-                    ...prev,
-                    searchTerm: e.target.value,
-                  }))
-                }
+                onChange={handleChange}
               />
             </div>
             <select
-              className="rounded-lg px-4 py-2 text-onsurface"
+              id="type"
+              className="rounded-lg bg-white/90 p-4 text-gray-800 outline-none backdrop-blur-sm transition-colors hover:bg-white"
               value={searchParams.type}
-              onChange={(e) =>
-                setSearchParams((prev) => ({ ...prev, type: e.target.value }))
-              }
+              onChange={handleChange}
             >
               <option value="all">Semua Tipe</option>
               <option value="Putra">Kost Putra</option>
               <option value="Putri">Kost Putri</option>
               <option value="Campur">Kost Campur</option>
             </select>
-            <button className="rounded-lg bg-secondary px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-600">
-              Cari
+            <button
+              type="submit"
+              className="rounded-lg bg-secondary px-8 py-4 font-semibold text-white transition-all hover:bg-secondary/90 hover:shadow-lg"
+            >
+              Cari Sekarang
             </button>
           </form>
         </div>
 
-        {/* Filters and Results */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          {/* Filters */}
-          <div className="rounded-lg bg-white p-4 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Filter</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="mb-2 font-medium">Rentang Harga</h3>
-                <div className="flex gap-2">
+        {/* Filters Toggle */}
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="flex w-full items-center justify-between rounded-xl bg-white p-4 text-gray-800 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <div className="flex items-center gap-3">
+              <FaFilter className="text-primary" />
+              <span className="font-semibold">Filter Pencarian</span>
+            </div>
+            {isFiltersOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
+
+          {isFiltersOpen && (
+            <div className="mt-4 space-y-6 rounded-xl bg-white p-6 shadow-sm">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Lokasi
+                  </label>
                   <input
-                    type="number"
-                    placeholder="Min"
-                    className="w-full rounded-lg border p-2"
-                    value={searchParams.priceMin}
-                    onChange={(e) =>
-                      setSearchParams((prev) => ({
-                        ...prev,
-                        priceMin: e.target.value,
-                      }))
-                    }
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    className="w-full rounded-lg border p-2"
-                    value={searchParams.priceMax}
-                    onChange={(e) =>
-                      setSearchParams((prev) => ({
-                        ...prev,
-                        priceMax: e.target.value,
-                      }))
-                    }
+                    type="text"
+                    id="location"
+                    placeholder="Masukkan lokasi"
+                    className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
+                    value={searchParams.location}
+                    onChange={handleChange}
                   />
                 </div>
-              </div>
-              <div>
-                <h3 className="mb-2 font-medium">Fasilitas</h3>
+
                 <div className="space-y-2">
-                  {facilities.map((facility, index) => (
-                    <label key={index} className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Kota
+                  </label>
+                  <input
+                    type="text"
+                    id="city"
+                    placeholder="Masukkan kota"
+                    className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
+                    value={searchParams.city}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <select
+                    id="availability"
+                    className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
+                    value={
+                      searchParams.availability === undefined
+                        ? ""
+                        : searchParams.availability.toString()
+                    }
+                    onChange={handleChange}
+                  >
+                    <option value="">Semua</option>
+                    <option value="true">Tersedia</option>
+                    <option value="false">Penuh</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Urutkan
+                  </label>
+                  <select
+                    id="sort_order"
+                    className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
+                    value={`${searchParams.sort}_${searchParams.order}`}
+                    onChange={handleChange}
+                  >
+                    <option value="createdAt_desc">Terbaru</option>
+                    <option value="createdAt_asc">Terlama</option>
+                    <option value="price_asc">Harga Terendah</option>
+                    <option value="price_desc">Harga Tertinggi</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-3 block text-sm font-medium text-gray-700">
+                  Fasilitas
+                </label>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                  {FACILITIES.map((facility) => (
+                    <label
+                      key={facility}
+                      className="flex cursor-pointer items-center gap-2"
+                    >
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300"
-                        onChange={(e) => {
-                          const newFacilities = e.target.checked
-                            ? [...searchParams.facilities, facility]
-                            : searchParams.facilities.filter(
-                                (f) => f !== facility,
-                              );
-                          setSearchParams((prev) => ({
-                            ...prev,
-                            facilities: newFacilities,
-                          }));
-                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        checked={searchParams.facilities.includes(facility)}
+                        onChange={(e) =>
+                          handleFacilityChange(facility, e.target.checked)
+                        }
                       />
-                      {facility}
+                      <span className="text-sm text-gray-700">{facility}</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Results */}
-          <div className="lg:col-span-3">
-            {loading ? (
-              <div className="text-center">
-                <p className="text-gray-600">Loading...</p>
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Example kost items */}
-                <KostCard
-                  kost={{
-                    name: "Kost Harmoni",
-                    type: "Putri",
-                    city: "Jakarta Selatan",
-                    facilities: ["WiFi", "AC", "Kamar Mandi Dalam"],
-                    price: 1500000,
-                    availability: true,
-                    imageUrls: ["/api/placeholder/400/300"],
-                    contact: {
-                      phone: "6281234567890",
-                      whatsapp: "6281234567890",
-                    },
-                  }}
-                />
-                <KostCard
-                  kost={{
-                    name: "Kost Sejahtera",
-                    type: "Putra",
-                    city: "Jakarta Barat",
-                    facilities: ["WiFi", "Parkir Motor", "Dapur"],
-                    price: 1200000,
-                    availability: false,
-                    imageUrls: ["/api/placeholder/400/300"],
-                    contact: {
-                      phone: "6281234567890",
-                      whatsapp: "6281234567890",
-                    },
-                  }}
-                />
+        {/* Results */}
+        {loading ? (
+          <div className="flex min-h-[400px] items-center justify-center">
+            <div className="text-center">
+              <div className="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <p className="text-gray-600">Sedang mencari kost...</p>
+            </div>
+          </div>
+        ) : kosts.length === 0 ? (
+          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl bg-white p-8 text-center shadow-sm">
+            <FaSearch className="mb-4 text-4xl text-gray-400" />
+            <h3 className="mb-2 text-xl font-semibold text-gray-800">
+              Tidak ada kost yang ditemukan
+            </h3>
+            <p className="text-gray-600">
+              Coba ubah filter pencarian atau gunakan kata kunci yang berbeda
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {kosts.map((item) => (
+                <KostCard key={item._id} item={item} isMyKostList={false} />
+              ))}
+            </div>
+
+            {/* Pagination Navigation */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  disabled={pagination.currentPage === 1}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white disabled:opacity-50"
+                >
+                  <FaChevronLeft className="text-gray-600" />
+                </button>
+
+                {getPageNumbers().map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
+                      pageNum === pagination.currentPage
+                        ? "bg-primary text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white disabled:opacity-50"
+                >
+                  <FaChevronRight className="text-gray-600" />
+                </button>
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default KostSearch;
+export default Search;

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaHeart, FaSearch, FaUser } from "react-icons/fa";
 import { GiHamburgerMenu } from "react-icons/gi";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   signOutUserFailure,
@@ -13,9 +13,13 @@ const Header = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const location = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
+
   const { currentUser } = useSelector((state) => state.user);
+  const searchRef = useRef(null);
+  const location = useLocation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const toggleSearch = () => {
     setIsSearchActive((prev) => !prev);
@@ -34,6 +38,39 @@ const Header = () => {
     setIsSearchActive(false);
     setIsMenuOpen(false);
   };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const searchTermFromUrl = urlParams.get("searchTerm");
+    if (searchTermFromUrl) {
+      setSearchTerm(searchTermFromUrl);
+    }
+  }, [location.search]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim() !== "") {
+      const urlParams = new URLSearchParams(location.search);
+      urlParams.set("searchTerm", searchTerm);
+      navigate(`/search?${urlParams.toString()}`);
+    }
+  };
+
+  // Reset searchTerm on link click
+  const resetSearch = () => setSearchTerm("");
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchActive(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -118,12 +155,12 @@ const Header = () => {
               )}
             </>
           ) : (
-            <Link to={"/sign-in"}>
+            <Link to={"/sign-in"} onClick={resetSearch}>
               <FaUser className="text-2xl text-white transition-all duration-300 hover:text-slate-700" />
             </Link>
           )}
         </div>
-        <Link to="/">
+        <Link to="/" onClick={resetSearch}>
           <p className="group flex">
             <span className="text-3xl font-extrabold italic text-white transition-all duration-500 group-hover:text-black">
               Kost
@@ -138,12 +175,14 @@ const Header = () => {
       {/* Desktop Navigation */}
       <div className="hidden space-x-5 md:flex">
         <LinkComponent
+          onClick={resetSearch}
           {...linkTargetHome}
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
         >
           Beranda
         </LinkComponent>
         <LinkComponent
+          onClick={resetSearch}
           {...linkTargetAbout}
           href="#about"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
@@ -151,6 +190,7 @@ const Header = () => {
           Info
         </LinkComponent>
         <LinkComponent
+          onClick={resetSearch}
           {...linkTargetKost}
           href="#kost"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
@@ -158,6 +198,7 @@ const Header = () => {
           Kost
         </LinkComponent>
         <LinkComponent
+          onClick={resetSearch}
           {...linkTargetKontak}
           href="#contact"
           className="relative inline-block px-4 text-xl text-white transition-all duration-300 after:absolute after:bottom-0 after:left-1/4 after:h-0.5 after:w-1/2 after:origin-bottom-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:text-black hover:after:origin-bottom-left hover:after:scale-x-100"
@@ -183,21 +224,29 @@ const Header = () => {
 
       {/* Search Box */}
       {isSearchActive && (
-        <div className="absolute right-[7%] top-full h-20 w-[300px] origin-top bg-white transition-transform duration-300 ease-in-out">
-          <div className="relative flex h-full items-center">
+        <div
+          ref={searchRef}
+          className="absolute right-[7%] top-full h-20 w-[300px] origin-top bg-white transition-transform duration-300 ease-in-out"
+        >
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex h-full items-center"
+          >
             <input
               type="search"
               id="search"
               placeholder="Cari Kost..."
+              value={searchTerm} // Tambahkan ini
               className="h-full w-full rounded-lg pl-3 text-base text-gray-800 md:text-lg"
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <label
-              htmlFor="search"
-              className="absolute right-4 cursor-pointer text-xl text-gray-800"
+            <button
+              type="submit"
+              className="absolute right-3 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary active:bg-gray-200"
             >
-              <FaSearch />
-            </label>
-          </div>
+              <FaSearch className="h-5 w-5" />
+            </button>
+          </form>
         </div>
       )}
 
@@ -209,12 +258,14 @@ const Header = () => {
       >
         <div className="mt-10 flex flex-col items-center justify-center space-y-4 px-4">
           <LinkComponent
+            onClick={resetSearch}
             {...linkTargetHome}
             className="text-2xl text-white transition-all hover:text-black"
           >
             Beranda
           </LinkComponent>
           <LinkComponent
+            onClick={resetSearch}
             {...linkTargetAbout}
             href="#about"
             className="mt text-2xl text-white transition-all hover:text-black"
@@ -222,6 +273,7 @@ const Header = () => {
             Info
           </LinkComponent>
           <LinkComponent
+            onClick={resetSearch}
             {...linkTargetKost}
             href="#kost"
             className="mt text-2xl text-white transition-all hover:text-black"
@@ -229,6 +281,7 @@ const Header = () => {
             Kost
           </LinkComponent>
           <LinkComponent
+            onClick={resetSearch}
             {...linkTargetKontak}
             href="#contact"
             className="mt text-2xl text-white transition-all hover:text-black"

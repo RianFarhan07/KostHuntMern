@@ -120,11 +120,11 @@ export const getKost = async (req, res) => {
 
 export const getAllKost = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 9;
-    const startIndex = (page - 1) * limit;
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit) || 9; // Default to 9 items per page
+    const skip = (page - 1) * limit;
 
-    //handle availability parameter
+    // Handle availability parameter
     let availability = req.query.availability;
     if (
       availability === undefined ||
@@ -134,7 +134,7 @@ export const getAllKost = async (req, res) => {
       availability = { $in: [false, true] };
     }
 
-    //handle type
+    // Handle type
     let type = req.query.type;
     if (type === undefined || type === "all") {
       type = { $in: ["Putra", "Putri", "Campur"] };
@@ -145,6 +145,7 @@ export const getAllKost = async (req, res) => {
       : undefined;
 
     const location = req.query.location ? req.query.location : undefined;
+    const city = req.query.city ? req.query.city : undefined;
 
     const searchTerm = req.query.searchTerm || "";
 
@@ -157,23 +158,31 @@ export const getAllKost = async (req, res) => {
       type,
       ...(facilities && { facilities }),
       ...(location && { location: { $regex: location, $options: "i" } }),
+      ...(city && { city: { $regex: city, $options: "i" } }),
     };
 
+    // Find kost data with pagination
     const kosts = await Kost.find(filters)
       .sort({ [sort]: order })
-      .limit(limit)
-      .skip(startIndex);
+      .skip(skip)
+      .limit(limit);
 
+    // Count total items for pagination
     const totalKosts = await Kost.countDocuments(filters);
 
+    // Calculate total pages
+    const totalPages = Math.ceil(totalKosts / limit);
+
     res.status(200).json({
-      kosts,
-      limit,
-      totalKosts,
-      page,
-      totaPages: Math.ceil(totalKosts / limit),
+      data: kosts, // The kost data for the current page
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalItems: totalKosts,
+      },
     });
   } catch (error) {
+    console.error("Error fetching kost data:", error);
     res.status(500).json({
       success: false,
       message: "Server Error",

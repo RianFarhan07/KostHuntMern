@@ -14,6 +14,7 @@ const Hero = () => {
           "linear-gradient(to bottom, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 0.8) 80%, rgba(0, 0, 0, 0.4) 90%, rgba(0, 0, 0, 0) 100%)",
         maskImage:
           "linear-gradient(to bottom, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 0.8) 80%, rgba(0, 0, 0, 0.4) 90%, rgba(0, 0, 0, 0) 100%)",
+        zIndex: 10,
       }}
     >
       <main className="fixed top-11 p-8 text-center text-slate-200 md:top-60">
@@ -32,8 +33,8 @@ const Hero = () => {
           Pilihan kost terbaik untuk kenyamanan tempat tinggal anda
         </p>
         <Link
-          to="/cari-kost"
-          className="absolute right-20 top-[50%] inline-block rounded-lg bg-yellow-400 px-14 py-6 text-xl font-semibold text-black shadow transition hover:bg-yellow-500 hover:shadow-lg md:left-[240px] md:right-auto md:top-80"
+          to="/search"
+          className="absolute right-20 top-[50%] z-20 inline-block rounded-lg bg-yellow-400 px-14 py-6 text-xl font-semibold text-black shadow transition hover:bg-yellow-500 hover:shadow-lg md:left-[240px] md:right-auto md:top-80"
         >
           Cari Sekarang
         </Link>

@@ -28,10 +28,14 @@
 
 .about-header,
 .menu-header,
-.contact-header,
-.kost-header {
+.contact-header {
   text-align: center;
   margin-bottom: 5rem;
+}
+
+.kost-header {
+  text-align: center;
+  margin-bottom: 3rem;
 }
 
 .about-header h2,

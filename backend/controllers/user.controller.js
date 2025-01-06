@@ -98,27 +98,48 @@ export const getUser = async (req, res, next) => {
 export const getUserKost = async (req, res) => {
   if (req.user.id === req.params.id) {
     try {
-      const page = parseInt(req.query.page) || 1; // Default to page 1 if no page is provided
-      const limit = parseInt(req.query.limit) || 9; // Default to 9 items per page if no limit is provided
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 9;
       const skip = (page - 1) * limit;
+      const searchTerm = req.query.searchTerm || "";
 
-      // Find kost data with pagination
-      const kost = await Kost.find({ userRef: req.params.id })
-        .skip(skip) // Skip the first N records
-        .limit(limit); // Limit the number of records per page
+      // Buat query dasar
+      let query = { userRef: req.params.id };
 
-      // Count total items for pagination
-      const totalKost = await Kost.countDocuments({ userRef: req.params.id });
+      // Tambahkan kondisi pencarian jika ada searchTerm
+      if (searchTerm) {
+        query = {
+          ...query,
+          $or: [
+            { title: { $regex: searchTerm, $options: "i" } },
+            { description: { $regex: searchTerm, $options: "i" } },
+            { address: { $regex: searchTerm, $options: "i" } },
+            { type: { $regex: searchTerm, $options: "i" } },
+            { facilities: { $regex: searchTerm, $options: "i" } },
+          ],
+        };
+      }
 
-      // Calculate total pages
+      // Eksekusi query dengan pagination
+      const kost = await Kost.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Urutkan dari yang terbaru
+
+      // Hitung total items yang sesuai dengan query
+      const totalKost = await Kost.countDocuments(query);
+
+      // Hitung total halaman
       const totalPages = Math.ceil(totalKost / limit);
 
       res.status(200).json({
-        data: kost, // The kost data for the current page
+        success: true,
+        data: kost,
         pagination: {
           currentPage: page,
           totalPages: totalPages,
           totalItems: totalKost,
+          itemsPerPage: limit,
         },
       });
     } catch (error) {
@@ -130,6 +151,9 @@ export const getUserKost = async (req, res) => {
       });
     }
   } else {
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
   }
 };

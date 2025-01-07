@@ -92,6 +92,8 @@ const Header = () => {
     { name: "Profile", href: "/profile" },
     { name: "My Kost", href: "/my-kost" },
     { name: "Stats", href: "/stats" },
+    { name: "My Order", href: "/my-orders" },
+    { name: "Tenant", href: "/tenant" },
     { name: "Log Out", onClick: handleLogout },
   ];
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { FaCreditCard } from "react-icons/fa";
 import {
   FiClock,
   FiCalendar,
@@ -10,8 +11,9 @@ import {
   FiXCircle,
   FiAlertCircle,
 } from "react-icons/fi";
+import { MdMoney } from "react-icons/md";
 
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, onViewDetail }) => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "paid":
@@ -83,7 +85,11 @@ const OrderCard = ({ order }) => {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-gray-100 pt-4">
           <div>
             <div className="mb-1 flex items-center gap-1.5 text-sm text-gray-600">
-              <FiCreditCard className="h-4 w-4" />
+              {order.payment.method === "cash" ? (
+                <MdMoney className="h-5 w-5 text-gray-400" />
+              ) : (
+                <FaCreditCard className="h-5 w-5 text-gray-400" />
+              )}
               <span className="capitalize">{order.payment.method}</span>
             </div>
             <div className="text-lg font-semibold text-gray-900">
@@ -92,7 +98,10 @@ const OrderCard = ({ order }) => {
           </div>
 
           <div className="flex gap-2">
-            <button className="rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">
+            <button
+              onClick={onViewDetail}
+              className="rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+            >
               Detail
             </button>
             {order.payment.status === "pending" && (

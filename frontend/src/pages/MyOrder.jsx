@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import { useSelector } from "react-redux";
 import OrderCard from "../components/OrderCard";
+import OrderDetailModal from "../components/OrderDetailModal";
 
 // Components remain the same
 const Tab = ({ active, onClick, children }) => (
@@ -53,6 +54,7 @@ const MyOrder = () => {
   const [pendingOrders, setPendingOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   console.log(currentUser._id);
 
   useEffect(() => {
@@ -131,7 +133,11 @@ const MyOrder = () => {
       <div className="space-y-4">
         {currentOrders?.length > 0 ? (
           currentOrders.map((order) => (
-            <OrderCard key={order._id} order={order} />
+            <OrderCard
+              key={order._id}
+              order={order}
+              onViewDetail={() => setSelectedOrder(order)}
+            />
           ))
         ) : (
           <div className="py-8 text-center text-gray-500">
@@ -139,8 +145,16 @@ const MyOrder = () => {
           </div>
         )}
       </div>
+
+      {selectedOrder && (
+        <OrderDetailModal
+          isOpen={!!selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          order={selectedOrder}
+          myOrder={true}
+        />
+      )}
     </div>
   );
 };
-
 export default MyOrder;

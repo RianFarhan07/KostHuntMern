@@ -31,7 +31,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/addkost" element={<AddKost />} />
           <Route path="/update-kost/:id" element={<UpdateKost />} />
-          <Route path="/my-order" element={<MyOrder />} />
+          <Route path="/my-orders" element={<MyOrder />} />
         </Route>
       </Routes>
     </BrowserRouter>

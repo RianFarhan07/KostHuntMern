@@ -244,7 +244,7 @@ export const myPendingOrders = async (req, res) => {
       "payment.method": "cash",
       "payment.status": "pending",
     })
-      .populate("kostId userId")
+      .populate("kostId userId ownerId") // ini untuk ketika simpan object akan di populate
       .sort({ createdAt: -1 });
 
     res.status(200).json({

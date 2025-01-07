@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css/bundle";
@@ -168,15 +168,13 @@ const Kost = () => {
                 <FaPhone className="text-white" />
                 <span>{kost.contact?.phone}</span>
               </a>
-              <a
-                href={`https://wa.me/${kost.contact?.whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to={`/checkout/${kost.contact?.whatsapp}`}
                 className="flex w-full items-center gap-3 rounded-lg bg-green-500 p-3 text-white transition-colors hover:bg-green-600"
               >
                 <FaWhatsapp className="text-white" />
-                <span>Chat di WhatsApp</span>
-              </a>
+                <span>Checkout</span>
+              </Link>
             </div>
 
             {/* <a

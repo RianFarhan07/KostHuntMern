@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/user.route.js";
 import kostRouter from "./routes/kost.route.js";
+import orderRouter from "./routes/order.route.js";
 import cors from "cors";
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/kost", kostRouter);
+app.use("/api/order", orderRouter);
 mongoose
   .connect(process.env.MONGOURI)
   .then(() => {

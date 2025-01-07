@@ -1,26 +1,34 @@
 import express from "express";
+import { verifyToken } from "../utils/verifyUser.js";
 import {
-  createOrder,
+  createCashOrder,
+  createMidtransOrder,
   getMyOrders,
   getOwnerOrders,
   getPendingOrders,
   handlePaymentNotification,
   updatePaymentStatus,
 } from "../controllers/order.controller.js";
-import { verifyToken } from "../utils/verifyUser.js";
 
 const router = express.Router();
 
-// Rute untuk membuat order
-router.post("/", verifyToken, createOrder); // Membuat order baru
+// Create new order
+router.post("/midtrans", verifyToken, createMidtransOrder);
+router.post("/cash", verifyToken, createCashOrder);
 
-// Rute untuk update status pembayaran (cash) oleh pemilik kos
-router.post("/:orderId/payment", verifyToken, updatePaymentStatus); // Membuat transaksi pembayaran
+// Update payment status for cash payments
+router.post("/:orderId/payment", verifyToken, updatePaymentStatus);
 
-// Rute untuk menangani notifikasi pembayaran (Midtrans webhook)
-router.post("/notification", handlePaymentNotification); // Webhook notifikasi pembayaran
+// Handle Midtrans payment notifications
+router.post("/notification", handlePaymentNotification);
 
+// Get user's orders
 router.get("/my-orders", verifyToken, getMyOrders);
+
+// Get pending orders (for owner dashboard)
 router.get("/pending", verifyToken, getPendingOrders);
+
+// Get all orders (for owner)
 router.get("/owner-orders", verifyToken, getOwnerOrders);
+
 export default router;

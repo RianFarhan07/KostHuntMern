@@ -2,9 +2,9 @@ import { createMidtransTransaction } from "../utils/midtrans/paymentService.js";
 import OrderKost from "../models/order.model.js";
 
 // Create Order Controller
-export const createOrder = async (req, res) => {
+export const createMidtransOrder = async (req, res) => {
   try {
-    const { duration, paymentMethod, tenant, kostId, startDate } = req.body;
+    const { duration, tenant, kostId, startDate } = req.body;
 
     // Create new order
     const order = new OrderKost({
@@ -12,37 +12,123 @@ export const createOrder = async (req, res) => {
       kostId,
       duration,
       startDate,
-      userId: req.user._id, // dari token
+      userId: req.user._id,
       ownerId: req.body.ownerId,
       orderStatus: "pending",
       payment: {
-        method: paymentMethod,
+        method: "midtrans",
         status: "pending",
         amount: req.body.amount,
       },
     });
 
-    // Jika pembayaran via Midtrans
-    if (paymentMethod === "midtrans") {
-      const transaction = await createMidtransTransaction(order);
-      order.payment.midtrans = {
-        transactionId: transaction.transaction_id,
-        paymentToken: transaction.token,
-        paymentUrl: transaction.redirect_url,
-      };
-    }
+    // Generate Midtrans transaction
+    const transaction = await createMidtransTransaction(order);
+
+    // Add Midtrans details to order
+    order.payment.midtrans = {
+      transactionId: transaction.transaction_id,
+      paymentToken: transaction.token,
+      paymentUrl: transaction.redirect_url,
+    };
 
     await order.save();
 
     res.status(201).json({
       success: true,
       order,
-      paymentUrl: order.payment.midtrans?.paymentUrl,
+      paymentToken: transaction.token, // Send token for Snap.js
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+// Create Cash Order
+export const createCashOrder = async (req, res) => {
+  try {
+    const { duration, tenant, kostId, startDate, ownerId, amount } = req.body;
+    const userId = req.user.id; // Get userId from authenticated user
+
+    // Validate required fields based on schema
+    if (
+      !tenant?.name ||
+      !tenant?.email ||
+      !tenant?.phone ||
+      !tenant?.identityNumber
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Incomplete tenant information",
+      });
+    }
+
+    // Calculate endDate based on duration
+    const startDateObj = new Date(startDate);
+    const endDate = new Date(startDateObj);
+    endDate.setMonth(endDate.getMonth() + duration);
+
+    // Create new order with complete structure matching schema
+    const order = new OrderKost({
+      tenant: {
+        name: tenant.name,
+        email: tenant.email,
+        phone: tenant.phone,
+        identityNumber: tenant.identityNumber,
+        identityImage: tenant.identityImage || "",
+        occupation: tenant.occupation || "",
+        emergencyContact: {
+          name: tenant.emergencyContact?.name || "",
+          phone: tenant.emergencyContact?.phone || "",
+          relationship: tenant.emergencyContact?.relationship || "",
+        },
+      },
+      kostId,
+      duration,
+      startDate: startDateObj,
+      endDate,
+      userId, // Now userId is defined from req.user
+      ownerId,
+      payment: {
+        method: "cash",
+        status: "pending",
+        amount,
+        cash: {
+          proofOfPayment: "",
+          verifiedAt: null,
+          verifiedBy: null,
+        },
+      },
+      orderStatus: "pending",
+    });
+
+    await order.save();
+
+    res.status(201).json({
+      success: true,
+      order: {
+        _id: order._id,
+        tenant: order.tenant,
+        duration: order.duration,
+        startDate: order.startDate,
+        endDate: order.endDate,
+        payment: {
+          method: order.payment.method,
+          status: order.payment.status,
+          amount: order.payment.amount,
+        },
+        orderStatus: order.orderStatus,
+      },
+    });
+  } catch (error) {
+    console.error("Cash order creation error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create cash order",
+      error: error.message,
     });
   }
 };

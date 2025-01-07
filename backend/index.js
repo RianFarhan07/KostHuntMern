@@ -25,7 +25,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/kost", kostRouter);
-app.use("/api/order", orderRouter);
+app.use("/api/orders", orderRouter);
 mongoose
   .connect(process.env.MONGOURI)
   .then(() => {

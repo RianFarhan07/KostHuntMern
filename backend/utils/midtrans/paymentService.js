@@ -1,8 +1,9 @@
-// services/paymentService.js
+// utils/midtrans/paymentService.js
 import midtransClient from "midtrans-client";
 
-const snap = new midtransClient.Snap({
-  isProduction: false,
+// Inisialisasi konfigurasi Midtrans
+const midtransConfig = new midtransClient.Snap({
+  isProduction: process.env.NODE_ENV === "production",
   serverKey: process.env.MIDTRANS_SERVER_KEY,
   clientKey: process.env.MIDTRANS_CLIENT_KEY,
 });
@@ -10,7 +11,7 @@ const snap = new midtransClient.Snap({
 export const createMidtransTransaction = async (order) => {
   const parameter = {
     transaction_details: {
-      order_id: order._id.toString(),
+      order_id: order._id,
       gross_amount: order.payment.amount,
     },
     customer_details: {
@@ -20,20 +21,23 @@ export const createMidtransTransaction = async (order) => {
     },
     item_details: [
       {
-        id: order.kostId.toString(),
+        id: order.kostId,
         price: order.payment.amount,
         quantity: 1,
         name: `Sewa Kost - ${order.duration} bulan`,
       },
     ],
-    credit_card: {
-      secure: true,
+    callbacks: {
+      finish: `${process.env.FRONTEND_URL}/payment/finish`,
+      error: `${process.env.FRONTEND_URL}/payment/error`,
+      pending: `${process.env.FRONTEND_URL}/payment/pending`,
     },
   };
 
-  return await snap.createTransaction(parameter);
-};
-
-export const getTransactionStatus = async (orderId) => {
-  return await snap.transaction.status(orderId);
+  try {
+    const transaction = await midtransConfig.createTransaction(parameter);
+    return transaction;
+  } catch (error) {
+    throw new Error(`Midtrans Error: ${error.message}`);
+  }
 };

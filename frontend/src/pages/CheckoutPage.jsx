@@ -6,7 +6,8 @@ import {
   BsPerson,
   BsHouseDoor,
 } from "react-icons/bs";
-import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 
 const CheckoutPage = () => {
@@ -16,14 +17,17 @@ const CheckoutPage = () => {
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { currentUser } = useSelector((state) => state.user);
 
   const params = useParams();
+  const navigate = useNavigate();
 
   const [tenantForm, setTenantForm] = useState({
     name: "",
     email: "",
     phone: "",
     identityNumber: "",
+    identityImage: "",
     occupation: "",
     emergencyContact: {
       name: "",
@@ -39,28 +43,6 @@ const CheckoutPage = () => {
         icon: "error",
         title: "Data Tidak Lengkap",
         text: "Mohon isi nama lengkap Anda",
-        confirmButtonColor: "#2563eb",
-      });
-      return false;
-    }
-
-    if (!tenantForm.email.trim()) {
-      Swal.fire({
-        icon: "error",
-        title: "Data Tidak Lengkap",
-        text: "Mohon isi alamat email Anda",
-        confirmButtonColor: "#2563eb",
-      });
-      return false;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(tenantForm.email)) {
-      Swal.fire({
-        icon: "error",
-        title: "Format Email Salah",
-        text: "Mohon masukkan alamat email yang valid",
         confirmButtonColor: "#2563eb",
       });
       return false;
@@ -100,47 +82,153 @@ const CheckoutPage = () => {
     return true;
   };
 
+  // Tambahkan useEffect untuk load Midtrans script
+  useEffect(() => {
+    const midtransScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
+    const myMidtransClientKey = "SB-Mid-client-yXBU6RXfgiTqgpp6";
+
+    let scriptTag = document.createElement("script");
+    scriptTag.src = midtransScriptUrl;
+    scriptTag.setAttribute("data-client-key", myMidtransClientKey);
+
+    document.body.appendChild(scriptTag);
+    return () => {
+      document.body.removeChild(scriptTag);
+    };
+  }, []);
+
+  // Modifikasi fungsi handleCheckout
   const handleCheckout = async () => {
     if (!validateForm()) return;
 
-    // Show loading state
-    const loadingAlert = Swal.fire({
-      title: "Memproses Pembayaran",
-      text: "Mohon tunggu sebentar...",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (paymentMethod === "midtrans") {
+        // For Midtrans, create payment token first
+        const tokenResponse = await fetch("/api/orders/create-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            duration,
+            paymentMethod,
+            tenant: tenantForm,
+            kostId: params.id,
+            ownerId: owner?._id,
+            amount: kost.price * duration,
+            startDate: new Date(),
+          }),
+        });
 
-      loadingAlert.close();
+        if (!tokenResponse.ok) {
+          throw new Error(`HTTP error! status: ${tokenResponse.status}`);
+        }
 
-      // Show success message
-      await Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: "Anda akan diarahkan ke halaman pembayaran",
-        confirmButtonColor: "#2563eb",
-      });
+        const tokenData = await tokenResponse.json();
 
-      console.log("Lanjut ke pembayaran");
-      // Add your payment processing logic here
+        // Open Snap payment popup
+        if (window.snap && tokenData.token) {
+          window.snap.pay(tokenData.token, {
+            onSuccess: async (result) => {
+              // Create order after successful payment
+              await createOrder({
+                ...result,
+                status: "paid",
+                paymentMethod: "midtrans",
+              });
+
+              Swal.fire({
+                icon: "success",
+                title: "Pembayaran Berhasil!",
+                text: "Pesanan Anda telah dikonfirmasi",
+                confirmButtonColor: "#2563eb",
+              }).then(() => navigate("/my-orders"));
+            },
+            onPending: (result) => {
+              Swal.fire({
+                icon: "info",
+                title: "Pembayaran Pending",
+                text: "Silakan selesaikan pembayaran Anda",
+              });
+            },
+            onError: (result) => {
+              Swal.fire({
+                icon: "error",
+                title: "Pembayaran Gagal",
+                text: "Silakan coba lagi",
+              });
+            },
+            onClose: () => {
+              Swal.fire({
+                icon: "warning",
+                title: "Pembayaran Dibatalkan",
+                text: "Anda menutup popup pembayaran",
+              });
+            },
+          });
+        }
+      } else if (paymentMethod === "cash") {
+        // For cash payment, create pending order directly
+        const response = await createOrder({
+          status: "pending",
+          paymentMethod: "cash",
+        });
+
+        if (response.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Order Berhasil!",
+            text: "Silakan hubungi pemilik kost untuk pembayaran",
+            confirmButtonColor: "#2563eb",
+          }).then(() => navigate("/my-orders"));
+        }
+      }
     } catch (error) {
-      loadingAlert.close();
-
       Swal.fire({
         icon: "error",
         title: "Terjadi Kesalahan",
-        text: "Mohon coba lagi nanti",
-        confirmButtonColor: "#2563eb",
+        text: error.message || "Mohon coba lagi nanti",
       });
     }
+  };
+
+  const calculateEndDate = (startDate, months) => {
+    const end = new Date(startDate);
+    end.setMonth(end.getMonth() + months);
+    return end;
+  };
+
+  // Helper function to create order
+  const createOrder = async (paymentDetails) => {
+    const startDate = new Date();
+    const endDate = calculateEndDate(startDate, duration);
+
+    const response = await fetch("/api/orders/cash", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        duration,
+        paymentMethod: paymentDetails.paymentMethod,
+        tenant: tenantForm,
+        kostId: params.id,
+        ownerId: owner?._id,
+        amount: kost.price * duration,
+        startDate: startDate,
+        endDate: endDate,
+        payment: {
+          status: paymentDetails.status,
+          ...paymentDetails,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   };
 
   useEffect(() => {
@@ -260,8 +348,20 @@ const CheckoutPage = () => {
                   type="email"
                   className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
                   value={tenantForm.email}
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Pekerjaan
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+                  value={tenantForm.occupation}
                   onChange={(e) =>
-                    setTenantForm({ ...tenantForm, email: e.target.value })
+                    setTenantForm({ ...tenantForm, occupation: e.target.value })
                   }
                 />
               </div>
@@ -294,6 +394,70 @@ const CheckoutPage = () => {
                     setTenantForm({
                       ...tenantForm,
                       identityNumber: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Contact Section */}
+          <div className="mt-6">
+            <h3 className="mb-4 text-lg font-medium">Kontak Darurat</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Nama Kontak Darurat
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+                  value={tenantForm.emergencyContact.name}
+                  onChange={(e) =>
+                    setTenantForm({
+                      ...tenantForm,
+                      emergencyContact: {
+                        ...tenantForm.emergencyContact,
+                        name: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Nomor Telepon Darurat
+                </label>
+                <input
+                  type="tel"
+                  className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+                  value={tenantForm.emergencyContact.phone}
+                  onChange={(e) =>
+                    setTenantForm({
+                      ...tenantForm,
+                      emergencyContact: {
+                        ...tenantForm.emergencyContact,
+                        phone: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Hubungan
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+                  value={tenantForm.emergencyContact.relationship}
+                  onChange={(e) =>
+                    setTenantForm({
+                      ...tenantForm,
+                      emergencyContact: {
+                        ...tenantForm.emergencyContact,
+                        relationship: e.target.value,
+                      },
                     })
                   }
                 />

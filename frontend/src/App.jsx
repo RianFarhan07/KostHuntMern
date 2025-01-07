@@ -23,7 +23,7 @@ const App = () => {
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/kost/:id" element={<Kost />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/checkout/:phoneNumber" element={<CheckoutPage />} />
+        <Route path="/checkout/:id" element={<CheckoutPage />} />
 
         <Route element={<PrivateRoutes />}>
           <Route path="/my-kost" element={<MyKostList />} />

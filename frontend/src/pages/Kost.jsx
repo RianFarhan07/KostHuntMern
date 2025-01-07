@@ -169,7 +169,7 @@ const Kost = () => {
                 <span>{kost.contact?.phone}</span>
               </a>
               <Link
-                to={`/checkout/${kost.contact?.whatsapp}`}
+                to={`/checkout/${kost._id}`}
                 className="flex w-full items-center gap-3 rounded-lg bg-green-500 p-3 text-white transition-colors hover:bg-green-600"
               >
                 <FaWhatsapp className="text-white" />

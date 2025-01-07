@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   BsCreditCard2Front,
   BsCash,
@@ -9,6 +9,13 @@ import {
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
+import { app } from "../firebase/firebase.config";
 
 const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -17,14 +24,18 @@ const CheckoutPage = () => {
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fileUploadError, setFileUploadError] = useState(false);
+  const [filePerc, setFilePerc] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
+  const fileRef = useRef(null);
 
   const params = useParams();
   const navigate = useNavigate();
 
   const [tenantForm, setTenantForm] = useState({
-    name: "",
-    email: "",
+    name: currentUser.username,
+    email: currentUser.email,
     phone: "",
     identityNumber: "",
     identityImage: "",
@@ -35,6 +46,79 @@ const CheckoutPage = () => {
       relationship: "",
     },
   });
+
+  const handleKTPUpload = (file) => {
+    setIsUploading(true);
+    const storage = getStorage(app);
+    const fileName = new Date().getTime() + file.name;
+    const storageRef = ref(storage, fileName);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setFilePerc(Math.round(progress));
+      },
+      (error) => {
+        setFileUploadError(true);
+        setIsUploading(false);
+        Swal.fire({
+          icon: "error",
+          title: "Upload Gagal",
+          text: "Gagal mengunggah foto KTP. Silakan coba lagi.",
+          confirmButtonColor: "#2563eb",
+        });
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setTenantForm({ ...tenantForm, identityImage: downloadURL });
+          setIsUploading(false);
+          // Show success message after upload completes
+          if (filePerc === 100) {
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil",
+              text: "Foto KTP berhasil diunggah",
+              confirmButtonColor: "#2563eb",
+            });
+          }
+        });
+      },
+    );
+  };
+
+  // Add the file selection handler
+  const handleKTPSelect = (e) => {
+    const file = e.target.files[0];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+
+    if (file) {
+      if (file.size > maxSize) {
+        Swal.fire({
+          icon: "error",
+          title: "Ukuran File Terlalu Besar",
+          text: "Maksimum ukuran file adalah 2MB",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        Swal.fire({
+          icon: "error",
+          title: "Tipe File Tidak Didukung",
+          text: "Hanya mendukung JPEG, PNG, dan GIF",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+
+      handleKTPUpload(file);
+    }
+  };
 
   const validateForm = () => {
     // Check required tenant information
@@ -63,6 +147,16 @@ const CheckoutPage = () => {
         icon: "error",
         title: "Data Tidak Lengkap",
         text: "Mohon isi nomor identitas (KTP) Anda",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
+
+    if (!tenantForm.identityImage) {
+      Swal.fire({
+        icon: "error",
+        title: "Data Tidak Lengkap",
+        text: "Mohon unggah foto KTP Anda",
         confirmButtonColor: "#2563eb",
       });
       return false;
@@ -115,6 +209,7 @@ const CheckoutPage = () => {
             tenant: tenantForm,
             kostId: params.id,
             ownerId: owner?._id,
+            userId: currentUser._id,
             amount: kost.price * duration,
             startDate: new Date(),
           }),
@@ -398,6 +493,39 @@ const CheckoutPage = () => {
                   }
                 />
               </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Foto KTP
+                </label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleKTPSelect}
+                    ref={fileRef}
+                    className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  {filePerc > 0 && filePerc < 100 && (
+                    <div className="text-sm text-gray-500">
+                      Sedang mengunggah... {filePerc}%
+                    </div>
+                  )}
+                  {fileUploadError && (
+                    <div className="text-sm text-red-500">
+                      Error: Gagal mengunggah gambar
+                    </div>
+                  )}
+                  {tenantForm.identityImage && (
+                    <div className="relative h-40 w-full">
+                      <img
+                        src={tenantForm.identityImage}
+                        alt="KTP Preview"
+                        className="h-40 w-full rounded-lg object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -558,8 +686,11 @@ const CheckoutPage = () => {
           <button
             className="w-full rounded-lg bg-primary px-8 py-3 text-lg font-medium text-onPrimary transition-colors hover:bg-primaryVariant sm:w-auto"
             onClick={handleCheckout}
+            disabled={isUploading}
           >
-            Lanjut ke Pembayaran
+            {isUploading
+              ? "Menunggu Upload Selesai..."
+              : "Lanjut ke Pembayaran"}
           </button>
         </div>
       </div>

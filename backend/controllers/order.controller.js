@@ -1,5 +1,5 @@
 import { createMidtransTransaction } from "../utils/midtrans/paymentService.js";
-import OrderKost from "../models/order.model.js";
+import Order from "../models/order.model.js";
 
 // Create Order Controller
 export const createMidtransOrder = async (req, res) => {
@@ -7,7 +7,7 @@ export const createMidtransOrder = async (req, res) => {
     const { duration, tenant, kostId, startDate } = req.body;
 
     // Create new order
-    const order = new OrderKost({
+    const order = new Order({
       tenant,
       kostId,
       duration,
@@ -72,7 +72,7 @@ export const createCashOrder = async (req, res) => {
     endDate.setMonth(endDate.getMonth() + duration);
 
     // Create new order with complete structure matching schema
-    const order = new OrderKost({
+    const order = new Order({
       tenant: {
         name: tenant.name,
         email: tenant.email,
@@ -143,7 +143,7 @@ export const handlePaymentNotification = async (req, res) => {
     const transactionStatus = notification.transaction_status;
     const fraudStatus = notification.fraud_status;
 
-    const order = await OrderKost.findById(orderId);
+    const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -181,7 +181,7 @@ export const handlePaymentNotification = async (req, res) => {
 // Update Payment Status (Cash)
 export const updatePaymentStatus = async (req, res) => {
   try {
-    const order = await OrderKost.findById(req.params.orderId);
+    const order = await Order.findById(req.params.orderId);
 
     if (!order || order.payment.method !== "cash") {
       return res.status(404).json({
@@ -214,9 +214,10 @@ export const updatePaymentStatus = async (req, res) => {
 
 // Get Orders for Dashboard
 export const getMyOrders = async (req, res) => {
+  const { id } = req.params;
   try {
-    const orders = await OrderKost.find({
-      userId: req.user._id,
+    const orders = await Order.find({
+      userId: id,
       orderStatus: "ordered", // Menampilkan kost yang sudah dipesan
     })
       .populate("kostId")
@@ -234,10 +235,34 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
+// Get Pending Orders untuk dashboard pemesan
+export const myPendingOrders = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const orders = await Order.find({
+      userId: id,
+      "payment.method": "cash",
+      "payment.status": "pending",
+    })
+      .populate("kostId userId")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // Get Pending Orders untuk dashboard pemilik kos
 export const getPendingOrders = async (req, res) => {
   try {
-    const orders = await OrderKost.find({
+    const orders = await Order.find({
       ownerId: req.user._id,
       payment: {
         method: "cash",
@@ -262,7 +287,7 @@ export const getPendingOrders = async (req, res) => {
 // Get All Orders untuk pemilik kos
 export const getOwnerOrders = async (req, res) => {
   try {
-    const orders = await OrderKost.find({
+    const orders = await Order.find({
       ownerId: req.user._id,
     })
       .populate("kostId userId")

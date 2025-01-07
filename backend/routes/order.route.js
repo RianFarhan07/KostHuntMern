@@ -7,6 +7,7 @@ import {
   getOwnerOrders,
   getPendingOrders,
   handlePaymentNotification,
+  myPendingOrders,
   updatePaymentStatus,
 } from "../controllers/order.controller.js";
 
@@ -23,7 +24,10 @@ router.post("/:orderId/payment", verifyToken, updatePaymentStatus);
 router.post("/notification", handlePaymentNotification);
 
 // Get user's orders
-router.get("/my-orders", verifyToken, getMyOrders);
+router.get("/my-orders/:id", verifyToken, getMyOrders);
+
+// Get my pending orders
+router.get("/my-pending-orders/:id", verifyToken, myPendingOrders);
 
 // Get pending orders (for owner dashboard)
 router.get("/pending", verifyToken, getPendingOrders);

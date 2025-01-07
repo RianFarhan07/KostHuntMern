@@ -20,6 +20,8 @@ import { app } from "../firebase/firebase.config";
 const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [duration, setDuration] = useState(1);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const [kost, setKost] = useState(null);
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -173,6 +175,60 @@ const CheckoutPage = () => {
       return false;
     }
 
+    // Validate emergency contact fields
+    if (!tenantForm.emergencyContact.name.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Data Tidak Lengkap",
+        text: "Mohon isi nama kontak darurat",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
+
+    if (!tenantForm.emergencyContact.phone.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Data Tidak Lengkap",
+        text: "Mohon isi nomor telepon kontak darurat",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
+
+    // Check if emergency contact phone has a valid format (e.g., at least 10 digits)
+    const phonePattern = /^[0-9]{10,12}$/;
+    if (!phonePattern.test(tenantForm.emergencyContact.phone)) {
+      Swal.fire({
+        icon: "error",
+        title: "Nomor Telepon Tidak Valid",
+        text: "Mohon isi nomor telepon yang valid untuk kontak darurat",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
+
+    if (!tenantForm.emergencyContact.relationship.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Data Tidak Lengkap",
+        text: "Mohon isi hubungan dengan kontak darurat",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
+
+    // Check payment method
+    if (!paymentMethod) {
+      Swal.fire({
+        icon: "error",
+        title: "Metode Pembayaran",
+        text: "Mohon pilih metode pembayaran",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
+
     return true;
   };
 
@@ -190,6 +246,32 @@ const CheckoutPage = () => {
       document.body.removeChild(scriptTag);
     };
   }, []);
+
+  // Update end date whenever duration or start date changes
+  useEffect(() => {
+    const newEndDate = new Date(startDate);
+    newEndDate.setMonth(newEndDate.getMonth() + duration);
+    setEndDate(newEndDate);
+  }, [duration, startDate]);
+
+  // Format date for input field
+  const formatDateForInput = (date) => {
+    return date.toISOString().split("T")[0];
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (date) => {
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const handleStartDateChange = (e) => {
+    const newStartDate = new Date(e.target.value);
+    setStartDate(newStartDate);
+  };
 
   // Modifikasi fungsi handleCheckout
   const handleCheckout = async () => {
@@ -287,17 +369,8 @@ const CheckoutPage = () => {
     }
   };
 
-  const calculateEndDate = (startDate, months) => {
-    const end = new Date(startDate);
-    end.setMonth(end.getMonth() + months);
-    return end;
-  };
-
   // Helper function to create order
   const createOrder = async (paymentDetails) => {
-    const startDate = new Date();
-    const endDate = calculateEndDate(startDate, duration);
-
     const response = await fetch("/api/orders/cash", {
       method: "POST",
       headers: {
@@ -621,6 +694,39 @@ const CheckoutPage = () => {
                 )}
               </button>
             ))}
+          </div>
+
+          {/* Date Selection */}
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Tanggal Mulai
+              </label>
+              <input
+                type="date"
+                value={formatDateForInput(startDate)}
+                onChange={handleStartDateChange}
+                min={formatDateForInput(new Date())}
+                className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                {formatDateForDisplay(startDate)}
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Tanggal Berakhir
+              </label>
+              <input
+                type="date"
+                value={formatDateForInput(endDate)}
+                disabled
+                className="w-full rounded-lg border bg-gray-50 p-2"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                {formatDateForDisplay(endDate)}
+              </p>
+            </div>
           </div>
         </div>
 

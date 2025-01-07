@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const orderKostSchema = new mongoose.Schema(
+const orderSchema = new mongoose.Schema(
   {
     // Informasi Penyewa (Tenant Form)
     tenant: {
@@ -128,12 +128,12 @@ const orderKostSchema = new mongoose.Schema(
 );
 
 // Indexes
-orderKostSchema.index({ userId: 1, orderStatus: 1 }); // Untuk halaman "Kost yang Saya sewa"
-orderKostSchema.index({ ownerId: 1, orderStatus: 1 }); // Untuk halaman dashboard pemilik
-orderKostSchema.index({ "payment.status": 1, orderStatus: 1 });
+orderSchema.index({ userId: 1, orderStatus: 1 }); // Untuk halaman "Kost yang Saya sewa"
+orderSchema.index({ ownerId: 1, orderStatus: 1 }); // Untuk halaman dashboard pemilik
+orderSchema.index({ "payment.status": 1, orderStatus: 1 });
 
 // Methods untuk update status
-orderKostSchema.methods.updateToOrdered = async function () {
+orderSchema.methods.updateToOrdered = async function () {
   if (this.payment.status === "paid") {
     this.orderStatus = "ordered";
     await this.save();
@@ -143,7 +143,7 @@ orderKostSchema.methods.updateToOrdered = async function () {
 };
 
 // Static methods
-orderKostSchema.statics.getPendingOrders = function (ownerId) {
+orderSchema.statics.getPendingOrders = function (ownerId) {
   return this.find({
     ownerId,
     orderStatus: "pending",
@@ -152,7 +152,7 @@ orderKostSchema.statics.getPendingOrders = function (ownerId) {
   }).populate("kostId userId");
 };
 
-orderKostSchema.statics.getMyKosts = function (userId) {
+orderSchema.statics.getMyKosts = function (userId) {
   return this.find({
     userId,
     orderStatus: "ordered",
@@ -160,7 +160,7 @@ orderKostSchema.statics.getMyKosts = function (userId) {
 };
 
 // Pre-save middleware
-orderKostSchema.pre("save", function (next) {
+orderSchema.pre("save", function (next) {
   // Hitung endDate berdasarkan startDate dan duration
   if (this.startDate && this.duration) {
     const endDate = new Date(this.startDate);
@@ -176,6 +176,6 @@ orderKostSchema.pre("save", function (next) {
   next();
 });
 
-const OrderKost = mongoose.model("OrderKost", orderKostSchema);
+const Order = mongoose.model("Order", orderSchema);
 
-export default OrderKost;
+export default Order;

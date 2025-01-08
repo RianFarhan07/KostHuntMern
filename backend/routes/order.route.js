@@ -30,9 +30,9 @@ router.get("/my-orders/:id", verifyToken, getMyOrders);
 router.get("/my-pending-orders/:id", verifyToken, myPendingOrders);
 
 // Get pending orders (for owner dashboard)
-router.get("/pending", verifyToken, getPendingOrders);
+router.get("/tenant-unpaid-orders/:id", verifyToken, getPendingOrders);
 
 // Get all orders (for owner)
-router.get("/owner-orders", verifyToken, getOwnerOrders);
+router.get("/tenant-paid-orders/:id", verifyToken, getOwnerOrders);
 
 export default router;

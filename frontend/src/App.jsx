@@ -13,6 +13,7 @@ import Kost from "./pages/Kost";
 import Search from "./pages/Search";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrder from "./pages/MyOrder";
+import Tenant from "./pages/Tenant";
 
 const App = () => {
   return (
@@ -32,6 +33,7 @@ const App = () => {
           <Route path="/addkost" element={<AddKost />} />
           <Route path="/update-kost/:id" element={<UpdateKost />} />
           <Route path="/my-orders" element={<MyOrder />} />
+          <Route path="/tenant" element={<Tenant />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,5 @@
 import React from "react";
-import { FaCreditCard } from "react-icons/fa";
+import { FaCreditCard, FaWhatsapp } from "react-icons/fa";
 import {
   FiClock,
   FiCalendar,
@@ -10,10 +10,12 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiAlertCircle,
+  FiPhone,
+  FiMail,
 } from "react-icons/fi";
 import { MdMoney } from "react-icons/md";
 
-const OrderCard = ({ order, onViewDetail }) => {
+const OrderCard = ({ order, onViewDetail, currentUser, showLoginAlert }) => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "paid":
@@ -38,6 +40,27 @@ const OrderCard = ({ order, onViewDetail }) => {
       default:
         return <FiCircle className="h-4 w-4" />;
     }
+  };
+
+  const formatPhoneNumber = (phoneNumber) => {
+    if (!phoneNumber.startsWith("+")) {
+      return `+62${phoneNumber.substring(1)}`;
+    }
+    return phoneNumber;
+  };
+
+  const handleWhatsAppChat = () => {
+    const message = `Halo, saya ${order.tenant.name}. Saya sudah melakukan pemesanan kost "${order.kostId.name}" dengan ID pesanan ${order._id} untuk durasi ${order.duration} bulan mulai ${new Date(
+      order.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}. Mohon konfirmasi untuk acc pemesanan saya. Terima kasih.`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${formatPhoneNumber(order.kostId?.contact.whatsapp)}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   return (
@@ -67,9 +90,47 @@ const OrderCard = ({ order, onViewDetail }) => {
                 <FiClock className="h-4 w-4" />
                 <span>{order.duration} bulan</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <FiUser className="h-4 w-4" />
-                <span>{order.tenant.name}</span>
+            </div>
+
+            <div className="mb-4 grid gap-4 md:grid-cols-2">
+              {/* Owner Information */}
+              <div className="rounded-lg bg-blue-50 p-4">
+                <h4 className="mb-2 font-medium text-gray-900">
+                  Informasi Pemilik
+                </h4>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <FiUser className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">
+                      {order.ownerId.username}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiMail className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">{order.ownerId.email}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tenant Information */}
+              <div className="rounded-lg bg-gray-50 p-4">
+                <h4 className="mb-2 font-medium text-gray-900">
+                  Informasi Penyewa
+                </h4>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <FiUser className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">{order.tenant.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiPhone className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">{order.tenant.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiMail className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">{order.tenant.email}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -105,8 +166,12 @@ const OrderCard = ({ order, onViewDetail }) => {
               Detail
             </button>
             {order.payment.status === "pending" && (
-              <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primaryVariant">
-                Bayar Sekarang
+              <button
+                onClick={handleWhatsAppChat}
+                className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600"
+              >
+                <FaWhatsapp className="text-lg" />
+                <span>Konfirmasi Pesanan</span>
               </button>
             )}
           </div>

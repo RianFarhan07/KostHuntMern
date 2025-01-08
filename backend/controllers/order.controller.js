@@ -238,23 +238,30 @@ export const getMyOrders = async (req, res) => {
 // Get Pending Orders untuk dashboard pemesan
 export const myPendingOrders = async (req, res) => {
   const { id } = req.params;
-  try {
-    const orders = await Order.find({
-      userId: id,
-      "payment.method": "cash",
-      "payment.status": "pending",
-    })
-      .populate("kostId userId ownerId") // ini untuk ketika simpan object akan di populate
-      .sort({ createdAt: -1 });
+  if (req.user.id === id) {
+    try {
+      const orders = await Order.find({
+        userId: id,
+        "payment.method": "cash",
+        "payment.status": "pending",
+      })
+        .populate("kostId userId ownerId") // ini untuk ketika simpan object akan di populate
+        .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      orders,
-    });
-  } catch (error) {
-    res.status(500).json({
+      res.status(200).json({
+        success: true,
+        orders,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  } else {
+    res.status(401).json({
       success: false,
-      message: error.message,
+      message: "Unauthorized",
     });
   }
 };

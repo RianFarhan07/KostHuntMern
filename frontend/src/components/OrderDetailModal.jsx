@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { FaRegCalendarCheck } from "react-icons/fa";
+import { FaCreditCard, FaRegCalendarCheck } from "react-icons/fa";
 import {
   FiX,
   FiHome,

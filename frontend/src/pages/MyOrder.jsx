@@ -11,9 +11,11 @@ import {
   FiAlertCircle,
   FiLoader,
 } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import OrderCard from "../components/OrderCard";
 import OrderDetailModal from "../components/OrderDetailModal";
+import Swal from "sweetalert2";
+import { autoLogout } from "../redux/user/userSlice";
 
 // Components remain the same
 const Tab = ({ active, onClick, children }) => (
@@ -55,6 +57,7 @@ const MyOrder = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const dispatch = useDispatch();
   console.log(currentUser._id);
 
   useEffect(() => {
@@ -69,23 +72,41 @@ const MyOrder = () => {
       try {
         if (activeTab === "ordered") {
           const data = await fetchMyOrders();
-          setOrderedOrders(data);
+          if (data) setOrderedOrders(data);
         } else {
           const data = await fetchPendingOrders();
-          setPendingOrders(data);
+          if (data) setPendingOrders(data);
         }
       } catch (err) {
         setError(err.message);
+        // Tambahkan penanganan error khusus untuk unauthorized
+        if (err.message.includes("unauthorized")) {
+          dispatch(autoLogout());
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchOrders();
-  }, [activeTab, currentUser?._id]); // Depend on currentUser ID
+  }, [activeTab, currentUser?._id, dispatch]); // Tambahkan dispatch ke dependencies
 
   const fetchMyOrders = async () => {
     const response = await fetch(`/api/orders/my-orders/${currentUser._id}`);
+
+    // Tambahkan pengecekan 401 yang sama
+    if (response.status === 401) {
+      const errorData = await response.json();
+      Swal.fire({
+        icon: "error",
+        title: "Unauthorized",
+        text:
+          errorData.message || "Your session has expired. Please log in again.",
+      });
+      dispatch(autoLogout());
+      return [];
+    }
+
     if (!response.ok) {
       throw new Error("Failed to fetch orders");
     }
@@ -97,9 +118,23 @@ const MyOrder = () => {
     const response = await fetch(
       `/api/orders/my-pending-orders/${currentUser._id}`,
     );
+
+    if (response.status === 401) {
+      const errorData = await response.json();
+      Swal.fire({
+        icon: "error",
+        title: "Unauthorized",
+        text:
+          errorData.message || "Your session has expired. Please log in again.",
+      });
+      dispatch(autoLogout());
+      return [];
+    }
+
     if (!response.ok) {
       throw new Error("Failed to fetch pending orders");
     }
+
     const data = await response.json();
     return data.orders;
   };

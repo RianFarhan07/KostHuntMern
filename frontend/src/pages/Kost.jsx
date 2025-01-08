@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
-import "swiper/css/bundle";
 import {
   FaMapMarkerAlt,
   FaPhone,
@@ -12,10 +11,13 @@ import {
   FaCalendar,
   FaShare,
   FaCheck,
+  FaComments,
+  FaShoppingCart,
 } from "react-icons/fa";
+import "swiper/css/bundle";
 
-const Kost = () => {
-  const params = useParams();
+const KostDetail = () => {
+  const { id } = useParams();
   const [kost, setKost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,9 +26,10 @@ const Kost = () => {
   useEffect(() => {
     const fetchKost = async () => {
       try {
-        const res = await fetch(`/api/kost/get/${params.id}`);
+        const res = await fetch(`/api/kost/get/${id}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        setKost(await res.json());
+        const data = await res.json();
+        setKost(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -34,73 +37,93 @@ const Kost = () => {
       }
     };
     fetchKost();
-  }, [params.id]);
+  }, [id]);
 
-  if (loading) return <p className="my-7 text-center text-2xl">Memuat...</p>;
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleWhatsAppChat = () => {
+    const message = `Halo, saya tertarik dengan kost "${kost.name}" yang berlokasi di ${kost.location}. Boleh tanya-tanya?`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${kost.contact?.whatsapp}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  if (loading)
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-2xl text-gray-500">Memuat...</p>
+      </div>
+    );
+
   if (error)
-    return <p className="my-7 text-center text-2xl">Terjadi kesalahan!</p>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-2xl text-red-500">Terjadi kesalahan!</p>
+      </div>
+    );
+
   if (!kost) return null;
 
   return (
-    <main>
+    <main className="min-h-screen bg-gray-50">
       <div className="relative">
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
           navigation
           pagination={{ clickable: true }}
           autoplay={{ delay: 5000 }}
+          className="h-[550px]"
         >
-          {kost.imageUrls.map((url) => (
-            <SwiperSlide key={url}>
+          {kost.imageUrls.map((url, index) => (
+            <SwiperSlide key={index}>
               <div
-                className="h-[550px]"
-                style={{
-                  background: `url(${url}) center no-repeat`,
-                  backgroundSize: "cover",
-                }}
-              ></div>
+                className="h-full w-full bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${url})` }}
+              />
             </SwiperSlide>
           ))}
         </Swiper>
-        <div className="fixed right-[3%] top-[13%] z-10 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border bg-slate-100">
-          <FaShare
-            className="text-slate-500"
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            }}
-          />
-        </div>
+        <button
+          onClick={handleShare}
+          className="fixed right-8 top-24 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:bg-gray-100"
+        >
+          <FaShare className="text-gray-600" />
+        </button>
         {copied && (
-          <p className="fixed right-[5%] top-[23%] z-10 rounded-md bg-slate-600 p-2">
-            Tautan disalin!
-          </p>
+          <div className="fixed right-8 top-40 z-10 rounded-md bg-gray-800 px-4 py-2 text-white">
+            Tautan berhasil disalin!
+          </div>
         )}
       </div>
 
       <div className="mx-auto max-w-6xl p-4">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <h1 className="mb-2 text-3xl font-bold">{kost.name}</h1>
-            <div className="mb-4 flex items-center gap-2 text-gray-600">
-              <FaMapMarkerAlt />
-              <span>
-                {kost.location}, {kost.city}
-              </span>
+          <div className="space-y-6 lg:col-span-2">
+            <div>
+              <h1 className="mb-2 text-3xl font-bold">{kost.name}</h1>
+              <div className="flex items-center gap-2 text-gray-600">
+                <FaMapMarkerAlt className="text-lg" />
+                <span>
+                  {kost.location}, {kost.city}
+                </span>
+              </div>
             </div>
 
-            <div className="mb-6">
+            <div className="flex items-center gap-4">
               <span className="text-2xl font-bold text-blue-600">
                 Rp {kost.price.toLocaleString()}
               </span>
               {kost.originalPrice && (
-                <span className="ml-2 text-gray-400 line-through">
+                <span className="text-gray-400 line-through">
                   Rp {kost.originalPrice.toLocaleString()}
                 </span>
               )}
               <span
-                className={`ml-4 rounded-full px-4 py-1 text-sm ${
+                className={`rounded-full px-4 py-1 text-sm ${
                   kost.availability
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
@@ -110,97 +133,109 @@ const Kost = () => {
               </span>
             </div>
 
-            <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Tentang</h2>
               <p className="text-gray-600">{kost.description}</p>
             </div>
 
-            <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Fasilitas</h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {kost.facilities.map((facility) => (
-                  <div key={facility} className="flex items-center gap-2">
+                {kost.facilities.map((facility, index) => (
+                  <div key={index} className="flex items-center gap-2">
                     <FaCheck className="text-green-500" />
-                    <span>{facility}</span>
+                    <span className="text-gray-700">{facility}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="rounded-lg bg-white p-6 shadow-md">
-              <h2 className="mb-4 text-xl font-semibold">Ulasan</h2>
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+                <FaComments />
+                Ulasan
+              </h2>
               {kost.reviews?.length > 0 ? (
-                kost.reviews.map((review, index) => (
-                  <div key={index} className="mb-4 border-b pb-4 last:border-0">
-                    <div className="mb-2 flex items-center gap-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar
-                            key={i}
-                            className={
-                              i < review.rating
-                                ? "text-yellow-400"
-                                : "text-gray-300"
-                            }
-                          />
-                        ))}
+                <div className="space-y-4">
+                  {kost.reviews.map((review, index) => (
+                    <div key={index} className="border-b pb-4 last:border-0">
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className={
+                                i < review.rating
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </span>
+                      <p className="text-gray-600">{review.comment}</p>
                     </div>
-                    <p className="text-gray-600">{review.comment}</p>
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
                 <p className="text-center text-gray-500">Belum ada ulasan</p>
               )}
             </div>
           </div>
 
-          <div className="lg:sticky lg:top-4 lg:h-fit">
+          <div className="space-y-6 lg:sticky lg:top-4">
             <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Informasi Kontak</h2>
-              <a
-                href={`tel:${kost.contact?.phone}`}
-                className="mb-3 flex w-full items-center gap-3 rounded-lg border bg-primary p-3 text-white transition hover:bg-primaryVariant"
-              >
-                <FaPhone className="text-white" />
-                <span>{kost.contact?.phone}</span>
-              </a>
-              <Link
-                to={`/checkout/${kost._id}`}
-                className="flex w-full items-center gap-3 rounded-lg bg-green-500 p-3 text-white transition-colors hover:bg-green-600"
-              >
-                <FaWhatsapp className="text-white" />
-                <span>Checkout</span>
-              </Link>
+              <div className="space-y-3">
+                <button
+                  onClick={handleWhatsAppChat}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-3 text-white transition-colors hover:bg-green-600"
+                >
+                  <FaWhatsapp className="text-xl" />
+                  <span>Chat WhatsApp</span>
+                </button>
+
+                <a
+                  href={`tel:${kost.contact?.phone}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700"
+                >
+                  <FaPhone />
+                  <span>Telepon Pemilik</span>
+                </a>
+
+                <Link
+                  to={`/checkout/${kost._id}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 text-white transition-colors hover:bg-orange-600"
+                >
+                  <FaShoppingCart />
+                  <span>Pesan Sekarang</span>
+                </Link>
+              </div>
+
+              <div className="mt-4 text-sm text-gray-500">
+                <p className="flex items-center gap-1">
+                  <FaWhatsapp className="text-green-500" />
+                  Waktu respon: ± 15 menit
+                </p>
+              </div>
             </div>
 
-            {/* <a
-            href={`tel:${kost.contact?.phone}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary p-2 text-sm text-white transition-colors hover:bg-primaryVariant"
-          >
-            <FaPhone /> Telepon
-          </a>
-          <a
-            href={`https://wa.me/${kost.contact?.whatsapp}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 p-2 text-sm text-white transition-colors hover:bg-green-600"
-          >
-            <FaWhatsapp /> WhatsApp
-          </a> */}
-
-            <div className="mt-6 rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Detail Properti</h2>
-              <div className="flex items-center gap-2">
-                <FaHome className="text-gray-500" />
-                <span>{kost.type}</span>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <FaCalendar className="text-gray-500" />
-                <span>
-                  Diperbarui {new Date(kost.updatedAt).toLocaleDateString()}
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FaHome />
+                  <span>{kost.type}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FaCalendar />
+                  <span>
+                    Diperbarui {new Date(kost.updatedAt).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -210,4 +245,4 @@ const Kost = () => {
   );
 };
 
-export default Kost;
+export default KostDetail;

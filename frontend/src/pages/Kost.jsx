@@ -241,7 +241,7 @@ const KostDetail = () => {
                 </button>
 
                 <a
-                  href={`tel:${kost.contact?.phone}`}
+                  href={`tel:${formatPhoneNumber(kost.contact?.phone)}`}
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700"
                 >
                   <FaPhone />

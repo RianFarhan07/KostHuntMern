@@ -4,11 +4,14 @@ import { FaGoogle } from "react-icons/fa";
 import { auth } from "../firebase/firebase.config";
 import { useDispatch } from "react-redux";
 import { signInSuccess } from "../redux/user/userSlice";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Oauth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/"; // Default fallback ke "/"
+
   const handleGoogleSignUp = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -32,7 +35,7 @@ const Oauth = () => {
 
       const data = await response.json();
       dispatch(signInSuccess(data));
-      navigate("/");
+      navigate(from);
     } catch (error) {
       console.log(error.message || "Google" + error);
     }

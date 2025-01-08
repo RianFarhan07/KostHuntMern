@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import {
@@ -15,13 +15,17 @@ import {
   FaShoppingCart,
 } from "react-icons/fa";
 import "swiper/css/bundle";
+import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
 
 const KostDetail = () => {
+  const { currentUser } = useSelector((state) => state.user);
   const { id } = useParams();
   const [kost, setKost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchKost = async () => {
@@ -39,16 +43,54 @@ const KostDetail = () => {
     fetchKost();
   }, [id]);
 
+  const showLoginAlert = () => {
+    Swal.fire({
+      title: "Login Diperlukan",
+      text: "Silakan login terlebih dahulu untuk melanjutkan",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "Login",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate("/sign-in", { state: { from: `/kost/${id}` } });
+      }
+    });
+  };
+
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleBooking = () => {
+    if (!currentUser) {
+      showLoginAlert();
+      return;
+    }
+    navigate(`/checkout/${kost._id}`);
+  };
+
+  const formatPhoneNumber = (phoneNumber) => {
+    // Pastikan nomor dimulai dengan kode negara
+    if (!phoneNumber.startsWith("+")) {
+      // Contoh untuk Indonesia, tambahkan "+62" jika nomor lokal
+      return `+62${phoneNumber.substring(1)}`;
+    }
+    return phoneNumber;
+  };
+
   const handleWhatsAppChat = () => {
+    if (!currentUser) {
+      showLoginAlert();
+      return;
+    }
     const message = `Halo, saya tertarik dengan kost "${kost.name}" yang berlokasi di ${kost.location}. Boleh tanya-tanya?`;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${kost.contact?.whatsapp}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${formatPhoneNumber(kost.contact?.whatsapp)}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -206,13 +248,13 @@ const KostDetail = () => {
                   <span>Telepon Pemilik</span>
                 </a>
 
-                <Link
-                  to={`/checkout/${kost._id}`}
+                <button
+                  onClick={handleBooking}
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 text-white transition-colors hover:bg-orange-600"
                 >
                   <FaShoppingCart />
                   <span>Pesan Sekarang</span>
-                </Link>
+                </button>
               </div>
 
               <div className="mt-4 text-sm text-gray-500">

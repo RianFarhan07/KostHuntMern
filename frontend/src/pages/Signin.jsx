@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Oauth from "../components/Oauth";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,6 +17,8 @@ const Signin = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation(); // Add this line to back to where you klik the login
+  const from = location.state?.from || "/";
 
   const {
     register,
@@ -47,7 +49,8 @@ const Signin = () => {
         return;
       }
       dispatch(signInSuccess(responseData));
-      navigate("/");
+      console.log("Redirecting to:", from);
+      navigate(from);
     } catch (error) {
       dispatch(signInFailure(error.message));
       console.log(error.message);

@@ -19,11 +19,11 @@ const Tab = ({ active, onClick, children }) => (
   </button>
 );
 
-const loadingState = () => {
+const LoadingState = () => (
   <div className="flex items-center justify-center py-8">
     <FiLoader className="h-8 w-8 animate-spin text-primary" />
-  </div>;
-};
+  </div>
+);
 
 const ErrorState = ({ message }) => (
   <div className="rounded-lg bg-red-50 p-4 text-center text-red-700">
@@ -44,8 +44,13 @@ const Tenant = () => {
   const [paidOrders, setPaidOrders] = useState([]);
   const [unpaidOrders, setUnpaidOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const refreshOrders = () => {
+    setRefreshTrigger((prev) => prev + 1); // Increment trigger to force refresh
+  };
 
   useEffect(() => {
     if (!currentUser) {
@@ -57,17 +62,14 @@ const Tenant = () => {
       setIsLoading(true);
       setError(null);
       try {
-        if (activeTab === "paid") {
-          const data = await fetchPaidOrders();
-          if (data) {
-            setPaidOrders(data);
-          }
-        } else {
-          const data = await fetchUnpaidOrders();
-          if (data) {
-            setUnpaidOrders(data);
-          }
-        }
+        // Fetch both types of orders simultaneously
+        const [paidOrder, unPaidOrder] = await Promise.all([
+          fetchPaidOrders(),
+          fetchUnpaidOrders(),
+        ]);
+
+        if (paidOrder) setPaidOrders(paidOrder);
+        if (unPaidOrder) setUnpaidOrders(unPaidOrder);
       } catch (err) {
         setError(err.message);
         if (err.message.includes("unauthorized")) {
@@ -78,7 +80,7 @@ const Tenant = () => {
       }
     };
     fetchOrders();
-  }, [activeTab, currentUser?._id, dispatch]);
+  }, [currentUser?._id, dispatch, refreshTrigger]);
 
   const fetchPaidOrders = async () => {
     const response = await fetch(
@@ -128,7 +130,12 @@ const Tenant = () => {
     return data.orders;
   };
 
-  if (isLoading) return <loadingState />;
+  const handleModalClose = () => {
+    setSelectedOrder(null);
+    refreshOrders(); // Refresh orders when modal closes
+  };
+
+  if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
 
   const currentOrders = activeTab === "paid" ? paidOrders : unpaidOrders;
@@ -162,7 +169,7 @@ const Tenant = () => {
               key={order._id}
               order={order}
               onViewDetail={() => setSelectedOrder(order)}
-              isTenant={true}
+              isMyOrder={false}
             />
           ))
         ) : (
@@ -175,9 +182,9 @@ const Tenant = () => {
       {selectedOrder && (
         <OrderDetailModal
           isOpen={!!selectedOrder}
-          onClose={() => setSelectedOrder(null)}
+          onClose={handleModalClose}
           order={selectedOrder}
-          isTenant={true}
+          owner={true}
         />
       )}
     </div>

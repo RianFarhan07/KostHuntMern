@@ -94,10 +94,9 @@ const orderSchema = new mongoose.Schema(
       cash: {
         proofOfPayment: String, // URL bukti pembayaran
         verifiedAt: Date,
-        verifiedBy: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
+        uploadedAt: Date,
+        uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       },
     },
 

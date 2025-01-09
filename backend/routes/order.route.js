@@ -4,11 +4,12 @@ import {
   createCashOrder,
   createMidtransOrder,
   getMyOrders,
+  getMyPendingOrders,
   getOwnerOrders,
   getPendingOrders,
   handlePaymentNotification,
-  myPendingOrders,
   updatePaymentStatus,
+  uploadPaymentProof,
 } from "../controllers/order.controller.js";
 
 const router = express.Router();
@@ -17,8 +18,11 @@ const router = express.Router();
 router.post("/midtrans", verifyToken, createMidtransOrder);
 router.post("/cash", verifyToken, createCashOrder);
 
-// Update payment status for cash payments
-router.post("/:orderId/payment", verifyToken, updatePaymentStatus);
+// Route for buyer to upload proof of payment
+router.put("/upload-payment-proof/:orderId", verifyToken, uploadPaymentProof); // Pembeli upload bukti pembayaran
+
+// Route for owner to verify payment status
+router.put("/verify-payment-status/:orderId", verifyToken, updatePaymentStatus); // Owner verifikasi pembayaran
 
 // Handle Midtrans payment notifications
 router.post("/notification", handlePaymentNotification);
@@ -27,7 +31,7 @@ router.post("/notification", handlePaymentNotification);
 router.get("/my-orders/:id", verifyToken, getMyOrders);
 
 // Get my pending orders
-router.get("/my-pending-orders/:id", verifyToken, myPendingOrders);
+router.get("/my-pending-orders/:id", verifyToken, getMyPendingOrders);
 
 // Get pending orders (for owner dashboard)
 router.get("/tenant-unpaid-orders/:id", verifyToken, getPendingOrders);

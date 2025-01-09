@@ -57,8 +57,13 @@ const MyOrder = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
   const dispatch = useDispatch();
   console.log(currentUser._id);
+
+  const refreshOrders = () => {
+    setRefreshTrigger((prev) => prev + 1); // Increment trigger to force refresh
+  };
 
   useEffect(() => {
     if (!currentUser) {
@@ -70,16 +75,16 @@ const MyOrder = () => {
       setIsLoading(true);
       setError(null);
       try {
-        if (activeTab === "ordered") {
-          const data = await fetchMyOrders();
-          if (data) setOrderedOrders(data);
-        } else {
-          const data = await fetchPendingOrders();
-          if (data) setPendingOrders(data);
-        }
+        // Fetch both types of orders simultaneously
+        const [orderedData, pendingData] = await Promise.all([
+          fetchMyOrders(),
+          fetchPendingOrders(),
+        ]);
+
+        if (orderedData) setOrderedOrders(orderedData);
+        if (pendingData) setPendingOrders(pendingData);
       } catch (err) {
         setError(err.message);
-        // Tambahkan penanganan error khusus untuk unauthorized
         if (err.message.includes("unauthorized")) {
           dispatch(autoLogout());
         }
@@ -87,9 +92,10 @@ const MyOrder = () => {
         setIsLoading(false);
       }
     };
-
     fetchOrders();
-  }, [activeTab, currentUser?._id, dispatch]); // Tambahkan dispatch ke dependencies
+  }, [currentUser?._id, dispatch, refreshTrigger]); // Add refreshTrigger to dependencies
+
+  // Tambahkan dispatch ke dependencies
 
   const fetchMyOrders = async () => {
     const response = await fetch(`/api/orders/my-orders/${currentUser._id}`);
@@ -139,6 +145,11 @@ const MyOrder = () => {
     return data.orders;
   };
 
+  const handleModalClose = () => {
+    setSelectedOrder(null);
+    refreshOrders(); // Refresh orders when modal closes
+  };
+
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
 
@@ -172,6 +183,7 @@ const MyOrder = () => {
               key={order._id}
               order={order}
               onViewDetail={() => setSelectedOrder(order)}
+              owner={false}
             />
           ))
         ) : (
@@ -184,9 +196,9 @@ const MyOrder = () => {
       {selectedOrder && (
         <OrderDetailModal
           isOpen={!!selectedOrder}
-          onClose={() => setSelectedOrder(null)}
+          onClose={handleModalClose}
           order={selectedOrder}
-          myOrder={true}
+          owner={false}
         />
       )}
     </div>

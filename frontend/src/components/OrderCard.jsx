@@ -15,7 +15,13 @@ import {
 } from "react-icons/fi";
 import { MdMoney } from "react-icons/md";
 
-const OrderCard = ({ order, onViewDetail, currentUser, showLoginAlert }) => {
+const OrderCard = ({
+  order,
+  onViewDetail,
+  currentUser,
+  showLoginAlert,
+  owner,
+}) => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "paid":
@@ -49,7 +55,7 @@ const OrderCard = ({ order, onViewDetail, currentUser, showLoginAlert }) => {
     return phoneNumber;
   };
 
-  const handleWhatsAppChat = () => {
+  const handleWhatsAppChatForMyOrder = () => {
     const message = `Halo, saya ${order.tenant.name}. Saya sudah melakukan pemesanan kost "${order.kostId.name}" dengan ID pesanan ${order._id} untuk durasi ${order.duration} bulan mulai ${new Date(
       order.startDate,
     ).toLocaleDateString("id-ID", {
@@ -60,6 +66,20 @@ const OrderCard = ({ order, onViewDetail, currentUser, showLoginAlert }) => {
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${formatPhoneNumber(order.kostId?.contact.whatsapp)}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const handleWhatsAppChatForOwner = () => {
+    const message = `Halo, saya ${order.ownerId.username} pemilik kost ${order.kostId.name}. Saya ingin mengkonfirmasi pesanan kost Anda dengan ID ${order._id} untuk durasi ${order.duration} bulan yang akan dimulai pada ${new Date(
+      order.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}. Silakan balas pesan ini untuk kelanjutan proses pemesanan. Terima kasih.`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${formatPhoneNumber(order.tenant.phone)}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -167,7 +187,11 @@ const OrderCard = ({ order, onViewDetail, currentUser, showLoginAlert }) => {
             </button>
             {order.payment.status === "pending" && (
               <button
-                onClick={handleWhatsAppChat}
+                onClick={
+                  owner
+                    ? handleWhatsAppChatForOwner
+                    : handleWhatsAppChatForMyOrder
+                }
                 className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600"
               >
                 <FaWhatsapp className="text-lg" />

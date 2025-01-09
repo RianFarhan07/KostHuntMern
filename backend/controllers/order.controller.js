@@ -195,9 +195,44 @@ export const updatePaymentStatus = async (req, res) => {
     order.orderStatus = "ordered"; // Sesuai flow: masuk ke "Order (Dipesan)"
     order.payment.cash = {
       verifiedAt: new Date(),
-      verifiedBy: req.user._id, // ID admin/pemilik kos yang verifikasi
+      verifiedBy: req.user.id, // ID admin/pemilik kos yang verifikasi
       proofOfPayment: req.body.proofOfPayment, // URL bukti pembayaran
     };
+
+    await order.save();
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Route untuk pembeli upload bukti pembayaran
+export const uploadPaymentProof = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order || order.payment.method !== "cash") {
+      return res.status(404).json({
+        success: false,
+        message: "Order tidak ditemukan atau metode pembayaran tidak valid",
+      });
+    }
+
+    // Update bukti pembayaran
+    order.payment.cash = {
+      proofOfPayment: req.body.proofOfPayment, // URL bukti pembayaran
+      uploadedAt: new Date(),
+      uploadedBy: req.user.id, // ID pembeli yang upload
+    };
+
+    // Status tetap pending sampai diverifikasi owner
+    order.payment.status = "pending";
 
     await order.save();
     res.status(200).json({
@@ -218,9 +253,9 @@ export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       userId: id,
-      orderStatus: "ordered", // Menampilkan kost yang sudah dipesan
+      "payment.status": "ordered", // Menampilkan kost yang sudah dipesan
     })
-      .populate("kostId")
+      .populate("kostId userId ownerId")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -236,7 +271,7 @@ export const getMyOrders = async (req, res) => {
 };
 
 // Get Pending Orders untuk dashboard pemesan
-export const myPendingOrders = async (req, res) => {
+export const getMyPendingOrders = async (req, res) => {
   const { id } = req.params;
   if (req.user.id === id) {
     try {
@@ -299,21 +334,30 @@ export const getPendingOrders = async (req, res) => {
 
 // Get All Orders untuk pemilik kos
 export const getOwnerOrders = async (req, res) => {
-  try {
-    const orders = await Order.find({
-      ownerId: req.user._id,
-    })
-      .populate("kostId userId")
-      .sort({ createdAt: -1 });
+  const { id } = req.params;
+  if (req.user.id === id) {
+    try {
+      const orders = await Order.find({
+        ownerId: id,
+        "payment.status": "paid",
+      })
+        .populate("kostId userId ownerId")
+        .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      orders,
-    });
-  } catch (error) {
-    res.status(500).json({
+      res.status(200).json({
+        success: true,
+        orders,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  } else {
+    res.status(401).json({
       success: false,
-      message: error.message,
+      message: "Unauthorized",
     });
   }
 };

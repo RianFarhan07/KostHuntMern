@@ -253,7 +253,7 @@ export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       userId: id,
-      "payment.status": "ordered", // Menampilkan kost yang sudah dipesan
+      orderStatus: "ordered", // Menampilkan kost yang sudah dipesan
     })
       .populate("kostId userId ownerId")
       .sort({ createdAt: -1 });
@@ -278,7 +278,7 @@ export const getMyPendingOrders = async (req, res) => {
       const orders = await Order.find({
         userId: id,
         "payment.method": "cash",
-        "payment.status": "pending",
+        orderStatus: "pending",
       })
         .populate("kostId userId ownerId") // ini untuk ketika simpan object akan di populate
         .sort({ createdAt: -1 });

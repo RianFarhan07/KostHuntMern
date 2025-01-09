@@ -455,8 +455,8 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <MdVerified className="h-4 w-4" />
                       <span>
-                        Terverifikasi pada:{" "}
-                        {formatDate(order.payment.cash.verifiedAt)}
+                        {`
+                        Terverifikasi pada: ${formatDate(order.payment.cash.verifiedAt)} oleh ${order.payment.cash.berifiedBy || order.ownerId.username}`}
                       </span>
                     </div>
                   )}

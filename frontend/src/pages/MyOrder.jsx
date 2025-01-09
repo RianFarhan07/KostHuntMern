@@ -119,6 +119,7 @@ const MyOrder = () => {
     const data = await response.json();
     return data.orders;
   };
+  console.log(orderedOrders);
 
   const fetchPendingOrders = async () => {
     const response = await fetch(

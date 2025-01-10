@@ -17,18 +17,19 @@ import {
   FaTrash,
   FaToggleOn,
   FaToggleOff,
+  FaUser,
 } from "react-icons/fa";
 import "swiper/css/bundle";
 import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
 import { autoLogout } from "../redux/user/userSlice";
-import ModernToggle from "../components/ModernToggleForKostPage";
 import ModernToggleForKostPage from "../components/ModernToggleForKostPage";
 
 const KostDetail = () => {
   const { currentUser } = useSelector((state) => state.user);
   const { id } = useParams();
   const [kost, setKost] = useState(null);
+  const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -37,19 +38,24 @@ const KostDetail = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchKost = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/kost/get/${id}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setKost(data);
+        const kostRes = await fetch(`/api/kost/get/${id}`);
+        const kostData = await kostRes.json();
+        setKost(kostData);
+
+        if (kostData.userRef) {
+          const ownerRes = await fetch(`/api/user/${kostData.userRef}`);
+          const ownerData = await ownerRes.json();
+          setOwner(ownerData);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchKost();
+    fetchData();
   }, [id]);
 
   const handleAvailabilityToggle = async (checked) => {
@@ -426,12 +432,27 @@ const KostDetail = () => {
                   </>
                 )}
               </div>
-              {kost.userRef !== currentUser?._id && (
+              {kost.userRef !== currentUser?._id ? (
                 <div className="mt-4 text-sm text-gray-500">
                   <p className="flex items-center gap-1">
                     <FaWhatsapp className="text-green-500" />
                     Waktu respon: ± 15 menit
                   </p>
+                  {owner && (
+                    <p className="flex items-center gap-1">
+                      <FaUser className="text-primary" />
+                      {`Pemilik: ${owner.username}`}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4 text-sm text-gray-500">
+                  {owner && (
+                    <p className="flex items-center gap-1">
+                      <FaUser className="text-primary" />
+                      {`Pemilik: Anda`}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

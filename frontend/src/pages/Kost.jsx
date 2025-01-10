@@ -13,10 +13,17 @@ import {
   FaCheck,
   FaComments,
   FaShoppingCart,
+  FaEdit,
+  FaTrash,
+  FaToggleOn,
+  FaToggleOff,
 } from "react-icons/fa";
 import "swiper/css/bundle";
 import Swal from "sweetalert2";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { autoLogout } from "../redux/user/userSlice";
+import ModernToggle from "../components/ModernToggleForKostPage";
+import ModernToggleForKostPage from "../components/ModernToggleForKostPage";
 
 const KostDetail = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -25,7 +32,9 @@ const KostDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchKost = async () => {
@@ -42,6 +51,135 @@ const KostDetail = () => {
     };
     fetchKost();
   }, [id]);
+
+  const handleAvailabilityToggle = async (checked) => {
+    try {
+      setIsUpdating(true);
+      const response = await fetch(`/api/kost/update/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          availability: checked,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update availability");
+      }
+
+      setKost((prev) => ({
+        ...prev,
+        availability: checked,
+      }));
+
+      showToast(
+        "success",
+        `Kost telah ${checked ? "diaktifkan" : "dinonaktifkan"}`,
+      );
+    } catch (error) {
+      console.error("Error updating availability:", error);
+      showToast("error", "Gagal memperbarui status");
+
+      setKost((prev) => ({
+        ...prev,
+        availability: !checked,
+      }));
+
+      if (
+        error.message?.includes("unauthorized") ||
+        error.message?.includes("session")
+      ) {
+        dispatch(autoLogout());
+        navigate("/sign-in");
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Apakah anda yakin?",
+        text: "Data kost yang dihapus tidak dapat dikembalikan!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Menghapus...",
+          text: "Mohon tunggu sebentar",
+          allowOutsideClick: false,
+          showConfirmButton: false,
+          willOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
+        const response = await fetch(`/api/kost/delete/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to delete kost");
+        }
+
+        await Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Data kost telah dihapus",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        navigate("/my-kost");
+      }
+    } catch (error) {
+      console.error("Error deleting kost:", error);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal menghapus kost",
+        text: error.message || "Terjadi kesalahan saat menghapus data kost",
+      });
+
+      if (
+        error.message?.includes("unauthorized") ||
+        error.message?.includes("session")
+      ) {
+        dispatch(autoLogout());
+        navigate("/sign-in");
+      }
+    }
+  };
+
+  const showToast = (icon, title) => {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+    Toast.fire({
+      icon,
+      title,
+    });
+  };
 
   const showLoginAlert = () => {
     Swal.fire({
@@ -227,44 +365,76 @@ const KostDetail = () => {
               )}
             </div>
           </div>
-
           <div className="space-y-6 lg:sticky lg:top-4">
             <div className="rounded-lg bg-white p-6 shadow-md">
-              <h2 className="mb-4 text-xl font-semibold">Informasi Kontak</h2>
+              <h2 className="mb-4 text-xl font-semibold">
+                {kost.userRef === currentUser?._id
+                  ? "Pengaturan Kost"
+                  : "Informasi Kontak"}
+              </h2>
               <div className="space-y-3">
-                <button
-                  onClick={handleWhatsAppChat}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-3 text-white transition-colors hover:bg-green-600"
-                >
-                  <FaWhatsapp className="text-xl" />
-                  <span>Chat WhatsApp</span>
-                </button>
-
-                <a
-                  href={`tel:${formatPhoneNumber(kost.contact?.phone)}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700"
-                >
-                  <FaPhone />
-                  <span>Telepon Pemilik</span>
-                </a>
-
-                <button
-                  onClick={handleBooking}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 text-white transition-colors hover:bg-orange-600"
-                >
-                  <FaShoppingCart />
-                  <span>Pesan Sekarang</span>
-                </button>
+                {kost.userRef === currentUser?._id ? (
+                  <>
+                    <div className="mb-4">
+                      <ModernToggleForKostPage
+                        checked={kost.availability}
+                        onChange={handleAvailabilityToggle}
+                        label={
+                          kost.availability ? "Tersedia" : "Tidak Tersedia"
+                        }
+                        size="default"
+                        disabled={isUpdating}
+                      />
+                    </div>
+                    <Link to={`/update-kost/${id}`}>
+                      <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-500 px-4 py-3 text-white transition-colors hover:bg-yellow-600">
+                        <FaEdit />
+                        <span>Edit Kost</span>
+                      </button>
+                    </Link>
+                    <button
+                      onClick={handleDelete}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-3 text-white transition-colors hover:bg-red-600"
+                    >
+                      <FaTrash />
+                      <span>Hapus Kost</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleWhatsAppChat}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-3 text-white transition-colors hover:bg-green-600"
+                    >
+                      <FaWhatsapp className="text-xl" />
+                      <span>Chat WhatsApp</span>
+                    </button>
+                    <a
+                      href={`tel:${formatPhoneNumber(kost.contact?.phone)}`}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700"
+                    >
+                      <FaPhone />
+                      <span>Telepon Pemilik</span>
+                    </a>
+                    <button
+                      onClick={handleBooking}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 text-white transition-colors hover:bg-orange-600"
+                    >
+                      <FaShoppingCart />
+                      <span>Pesan Sekarang</span>
+                    </button>
+                  </>
+                )}
               </div>
-
-              <div className="mt-4 text-sm text-gray-500">
-                <p className="flex items-center gap-1">
-                  <FaWhatsapp className="text-green-500" />
-                  Waktu respon: ± 15 menit
-                </p>
-              </div>
+              {kost.userRef !== currentUser._id && (
+                <div className="mt-4 text-sm text-gray-500">
+                  <p className="flex items-center gap-1">
+                    <FaWhatsapp className="text-green-500" />
+                    Waktu respon: ± 15 menit
+                  </p>
+                </div>
+              )}
             </div>
-
             <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 text-xl font-semibold">Detail Properti</h2>
               <div className="space-y-2">

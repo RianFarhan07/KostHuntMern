@@ -426,7 +426,7 @@ const KostDetail = () => {
                   </>
                 )}
               </div>
-              {kost.userRef !== currentUser._id && (
+              {kost.userRef !== currentUser?._id && (
                 <div className="mt-4 text-sm text-gray-500">
                   <p className="flex items-center gap-1">
                     <FaWhatsapp className="text-green-500" />

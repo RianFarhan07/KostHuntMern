@@ -14,6 +14,7 @@ import Search from "./pages/Search";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrder from "./pages/MyOrder";
 import Tenant from "./pages/Tenant";
+import Favorite from "./pages/Favorite";
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
         <Route path="/kost/:id" element={<Kost />} />
         <Route path="/search" element={<Search />} />
         <Route path="/checkout/:id" element={<CheckoutPage />} />
+        <Route path="/favorit" element={<Favorite />} />
 
         <Route element={<PrivateRoutes />}>
           <Route path="/my-kost" element={<MyKostList />} />

@@ -232,10 +232,19 @@ const KostDetail = () => {
       showLoginAlert();
       return;
     }
-    const message = `Halo, saya tertarik dengan kost "${kost.name}" yang berlokasi di ${kost.location}. Boleh tanya-tanya?`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${formatPhoneNumber(kost.contact?.whatsapp)}?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
+    // Tambahkan encodeURIComponent untuk semua bagian pesan yang berisi data dinamis
+    const message = encodeURIComponent(
+      `Halo, saya tertarik dengan kost "${kost.name}" yang berlokasi di ${kost.location}. Boleh tanya-tanya?`,
+    );
+
+    // Pastikan nomor WhatsApp sudah diformat dengan benar
+    const formattedPhone = formatPhoneNumber(kost.contact?.whatsapp);
+
+    // Gunakan URL yang sudah di-encode dengan benar
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+
+    // Buka di tab baru
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   if (loading)

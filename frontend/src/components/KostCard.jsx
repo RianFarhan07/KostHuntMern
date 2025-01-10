@@ -1,5 +1,11 @@
 /* eslint-disable react/prop-types */
-import { FaEdit, FaHeart, FaMapMarkedAlt, FaTrash } from "react-icons/fa";
+import {
+  FaCheck,
+  FaEdit,
+  FaHeart,
+  FaMapMarkedAlt,
+  FaTrash,
+} from "react-icons/fa";
 import gambarKost from "../assets/default/kostDefault.jpg";
 import "../styles/section.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,7 +21,13 @@ import Swal from "sweetalert2";
 import ModernToggle from "./ModernToggle";
 import { useState } from "react";
 ``;
-const KostCard = ({ item: initialItem, isMyKostList }) => {
+const KostCard = ({
+  item: initialItem,
+  isMyKostList,
+  isMyFavorite,
+  onToggleSelect,
+  isSelected,
+}) => {
   const [item, setItem] = useState(initialItem);
   const [isUpdating, setIsUpdating] = useState(false);
   const dispatch = useDispatch();
@@ -233,6 +245,33 @@ const KostCard = ({ item: initialItem, isMyKostList }) => {
     >
       {/* Image Section with Availability Toggle */}
       <div className="relative">
+        {isMyFavorite && (
+          <div className="absolute left-2 top-2 z-10">
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggleSelect(item._id)}
+                disabled={!item.availability}
+                className="peer sr-only"
+              />
+              <div className="group relative h-6 w-6 overflow-hidden rounded-lg border-2 border-white bg-white/80 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-primary peer-checked:border-primary peer-checked:bg-primary/90 peer-disabled:cursor-not-allowed peer-disabled:border-gray-300 peer-disabled:bg-gray-100">
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <FaCheck className="h-3.5 w-3.5 text-white" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </label>
+          </div>
+        )}
         <Link
           to={`/kost/${item._id}`}
           className="block transition-colors duration-300"

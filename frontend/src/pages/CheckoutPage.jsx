@@ -18,20 +18,22 @@ import {
 import { app } from "../firebase/firebase.config";
 
 const CheckoutPage = () => {
+  // 1. State Hooks
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [duration, setDuration] = useState(1);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const [kost, setKost] = useState(null);
-  const [owner, setOwner] = useState(null);
+  const [kosts, setKosts] = useState([]);
+  const [durations, setDurations] = useState({});
+  const [startDates, setStartDates] = useState({});
+  const [endDates, setEndDates] = useState({});
+  const [owners, setOwners] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fileUploadError, setFileUploadError] = useState(false);
   const [filePerc, setFilePerc] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Hooks lainnya
   const { currentUser } = useSelector((state) => state.user);
   const fileRef = useRef(null);
-
   const params = useParams();
   const navigate = useNavigate();
 
@@ -49,6 +51,188 @@ const CheckoutPage = () => {
     },
   });
 
+  // 2. Effect Hooks
+  // Memuat script Midtrans saat komponen dimount
+  useEffect(() => {
+    const midtransScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
+    const myMidtransClientKey = "SB-Mid-client-yXBU6RXfgiTqgpp6";
+
+    let scriptTag = document.createElement("script");
+    scriptTag.src = midtransScriptUrl;
+    scriptTag.setAttribute("data-client-key", myMidtransClientKey);
+
+    document.body.appendChild(scriptTag);
+    return () => {
+      document.body.removeChild(scriptTag);
+    };
+  }, []);
+
+  // Memperbarui tanggal berakhir saat durasi atau tanggal mulai berubah
+  useEffect(() => {
+    const newEndDate = new Date(startDates);
+    newEndDate.setMonth(newEndDate.getMonth() + durations);
+    setEndDates(newEndDate);
+  }, [durations, startDates]);
+
+  // Mengambil data kost dan pemilik
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Mengambil ID kost dari parameter URL
+        const kostIds = params.id.split(",");
+        const kostPromises = kostIds.map((id) =>
+          fetch(`/api/kost/get/${id}`).then((res) => res.json()),
+        );
+
+        const kostsData = await Promise.all(kostPromises);
+        setKosts(kostsData);
+
+        // Inisialisasi data untuk setiap kost
+        const initialDurations = {};
+        const initialStartDates = {};
+        const initialEndDates = {};
+        const ownerPromises = {};
+
+        kostsData.forEach((kost) => {
+          // Set durasi awal
+          initialDurations[kost._id] = 1;
+
+          // Set tanggal mulai awal
+          const startDate = new Date();
+          startDate.setHours(0, 0, 0, 0);
+          initialStartDates[kost._id] = startDate;
+
+          // Hitung tanggal berakhir awal
+          initialEndDates[kost._id] = calculateEndDate(startDate, 1);
+
+          // Siapkan promise untuk mengambil data pemilik
+          if (kost.userRef) {
+            ownerPromises[kost._id] = fetch(`/api/user/${kost.userRef}`)
+              .then((res) => res.json())
+              .then((data) => {
+                console.log(`Owner data for kost ${kost._id}:`, data); // Add this log
+                return data;
+              })
+              .catch((error) => {
+                console.error(
+                  `Error fetching owner for kost ${kost._id}:`,
+                  error,
+                );
+                return null;
+              });
+          }
+        });
+
+        // Set state awal
+        setDurations(initialDurations);
+        setStartDates(initialStartDates);
+        setEndDates(initialEndDates);
+
+        // Ambil semua data pemilik
+        const ownersData = {};
+        await Promise.all(
+          Object.entries(ownerPromises).map(async ([kostId, promise]) => {
+            const ownerData = await promise;
+            if (ownerData) {
+              ownersData[kostId] = ownerData;
+            }
+          }),
+        );
+        setOwners(ownersData);
+        console.log("Owner data received:", ownersData);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [params.id]);
+
+  // 3. Fungsi Helper
+
+  // Menghitung total pembayaran untuk semua kost
+  const calculateTotalAmount = () => {
+    return kosts.reduce((total, kost) => {
+      return total + kost.price * (durations[kost._id] || 1);
+    }, 0);
+  };
+
+  // Menghitung tanggal berakhir berdasarkan tanggal mulai dan durasi
+  const calculateEndDate = (startDate, months) => {
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + months);
+    return endDate;
+  };
+
+  // Memformat tanggal untuk input field (YYYY-MM-DD)
+  const formatDateForInput = (date) => {
+    try {
+      if (!(date instanceof Date) || isNaN(date)) {
+        date = new Date();
+      }
+      return date.toISOString().split("T")[0];
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return new Date().toISOString().split("T")[0];
+    }
+  };
+
+  // Memformat tanggal untuk ditampilkan (contoh: "1 Januari 2025")
+  const formatDateForDisplay = (date) => {
+    try {
+      if (!(date instanceof Date) || isNaN(date)) {
+        date = new Date();
+      }
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Date display formatting error:", error);
+      return new Date().toLocaleDateString("id-ID");
+    }
+  };
+
+  // 4. Fungsi Handler
+
+  // Menangani perubahan durasi untuk kost tertentu
+  const handleDurationChange = (kostId, months) => {
+    setDurations((prev) => ({
+      ...prev,
+      [kostId]: months,
+    }));
+
+    const currentStartDate = startDates[kostId] || new Date();
+    const newEndDate = new Date(currentStartDate);
+    newEndDate.setMonth(newEndDate.getMonth() + months);
+    setEndDates((prev) => ({
+      ...prev,
+      [kostId]: newEndDate,
+    }));
+  };
+
+  // Menangani perubahan tanggal mulai untuk kost tertentu
+  const handleStartDateChange = (kostId, date) => {
+    const newStartDate = new Date(date);
+    setStartDates((prev) => ({
+      ...prev,
+      [kostId]: newStartDate,
+    }));
+
+    const currentDuration = durations[kostId] || 1;
+    const newEndDate = new Date(newStartDate);
+    newEndDate.setMonth(newEndDate.getMonth() + currentDuration);
+    setEndDates((prev) => ({
+      ...prev,
+      [kostId]: newEndDate,
+    }));
+  };
+
+  // Menangani upload foto KTP ke Firebase
   const handleKTPUpload = (file) => {
     setIsUploading(true);
     const storage = getStorage(app);
@@ -77,7 +261,6 @@ const CheckoutPage = () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setTenantForm({ ...tenantForm, identityImage: downloadURL });
           setIsUploading(false);
-          // Show success message after upload completes
           if (filePerc === 100) {
             Swal.fire({
               icon: "success",
@@ -91,7 +274,7 @@ const CheckoutPage = () => {
     );
   };
 
-  // Add the file selection handler
+  // Menangani pemilihan file KTP dan validasi
   const handleKTPSelect = (e) => {
     const file = e.target.files[0];
     const maxSize = 2 * 1024 * 1024; // 2MB
@@ -122,8 +305,10 @@ const CheckoutPage = () => {
     }
   };
 
+  // 5. Fungsi Validasi
+
+  // Memvalidasi data form sebelum submit
   const validateForm = () => {
-    // Check required tenant information
     if (!tenantForm.name.trim()) {
       Swal.fire({
         icon: "error",
@@ -164,7 +349,6 @@ const CheckoutPage = () => {
       return false;
     }
 
-    // Check payment method
     if (!paymentMethod) {
       Swal.fire({
         icon: "error",
@@ -175,7 +359,6 @@ const CheckoutPage = () => {
       return false;
     }
 
-    // Validate emergency contact fields
     if (!tenantForm.emergencyContact.name.trim()) {
       Swal.fire({
         icon: "error",
@@ -196,7 +379,6 @@ const CheckoutPage = () => {
       return false;
     }
 
-    // Check if emergency contact phone has a valid format (e.g., at least 10 digits)
     const phonePattern = /^[0-9]{10,12}$/;
     if (!phonePattern.test(tenantForm.emergencyContact.phone)) {
       Swal.fire({
@@ -218,7 +400,6 @@ const CheckoutPage = () => {
       return false;
     }
 
-    // Check payment method
     if (!paymentMethod) {
       Swal.fire({
         icon: "error",
@@ -232,159 +413,24 @@ const CheckoutPage = () => {
     return true;
   };
 
-  // Tambahkan useEffect untuk load Midtrans script
-  useEffect(() => {
-    const midtransScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
-    const myMidtransClientKey = "SB-Mid-client-yXBU6RXfgiTqgpp6";
+  // 6. Fungsi Pembayaran
 
-    let scriptTag = document.createElement("script");
-    scriptTag.src = midtransScriptUrl;
-    scriptTag.setAttribute("data-client-key", myMidtransClientKey);
-
-    document.body.appendChild(scriptTag);
-    return () => {
-      document.body.removeChild(scriptTag);
-    };
-  }, []);
-
-  // Update end date whenever duration or start date changes
-  useEffect(() => {
-    const newEndDate = new Date(startDate);
-    newEndDate.setMonth(newEndDate.getMonth() + duration);
-    setEndDate(newEndDate);
-  }, [duration, startDate]);
-
-  // Format date for input field
-  const formatDateForInput = (date) => {
-    return date.toISOString().split("T")[0];
-  };
-
-  // Format date for display
-  const formatDateForDisplay = (date) => {
-    return date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  const handleStartDateChange = (e) => {
-    const newStartDate = new Date(e.target.value);
-    setStartDate(newStartDate);
-  };
-
-  // Modifikasi fungsi handleCheckout
-  const handleCheckout = async () => {
-    if (!validateForm()) return;
-
-    try {
-      if (paymentMethod === "midtrans") {
-        // For Midtrans, create payment token first
-        const tokenResponse = await fetch("/api/orders/create-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            duration,
-            paymentMethod,
-            tenant: tenantForm,
-            kostId: params.id,
-            ownerId: owner?._id,
-            userId: currentUser._id,
-            amount: kost.price * duration,
-            startDate: new Date(),
-          }),
-        });
-
-        if (!tokenResponse.ok) {
-          throw new Error(`HTTP error! status: ${tokenResponse.status}`);
-        }
-
-        const tokenData = await tokenResponse.json();
-
-        // Open Snap payment popup
-        if (window.snap && tokenData.token) {
-          window.snap.pay(tokenData.token, {
-            onSuccess: async (result) => {
-              // Create order after successful payment
-              await createOrder({
-                ...result,
-                status: "paid",
-                paymentMethod: "midtrans",
-              });
-
-              Swal.fire({
-                icon: "success",
-                title: "Pembayaran Berhasil!",
-                text: "Pesanan Anda telah dikonfirmasi",
-                confirmButtonColor: "#2563eb",
-              }).then(() => navigate("/my-orders"));
-            },
-            onPending: (result) => {
-              Swal.fire({
-                icon: "info",
-                title: "Pembayaran Pending",
-                text: "Silakan selesaikan pembayaran Anda",
-              });
-            },
-            onError: (result) => {
-              Swal.fire({
-                icon: "error",
-                title: "Pembayaran Gagal",
-                text: "Silakan coba lagi",
-              });
-            },
-            onClose: () => {
-              Swal.fire({
-                icon: "warning",
-                title: "Pembayaran Dibatalkan",
-                text: "Anda menutup popup pembayaran",
-              });
-            },
-          });
-        }
-      } else if (paymentMethod === "cash") {
-        // For cash payment, create pending order directly
-        const response = await createOrder({
-          status: "pending",
-          paymentMethod: "cash",
-        });
-
-        if (response.success) {
-          Swal.fire({
-            icon: "success",
-            title: "Order Berhasil!",
-            text: "Silakan hubungi pemilik kost untuk pembayaran",
-            confirmButtonColor: "#2563eb",
-          }).then(() => navigate("/my-orders"));
-        }
-      }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Terjadi Kesalahan",
-        text: error.message || "Mohon coba lagi nanti",
-      });
-    }
-  };
-
-  // Helper function to create order
-  const createOrder = async (paymentDetails) => {
+  // Membuat order di database
+  const createOrder = async (kostId, paymentDetails) => {
     const response = await fetch("/api/orders/cash", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        duration,
+        duration: durations[kostId],
         paymentMethod: paymentDetails.paymentMethod,
         tenant: tenantForm,
-        kostId: params.id,
-        ownerId: owner?._id,
-        amount: kost.price * duration,
-        startDate: startDate,
-        endDate: endDate,
+        kostId: kostId,
+        ownerId: owners[kostId]?._id,
+        amount: kosts.find((k) => k._id === kostId).price * durations[kostId],
+        startDate: startDates[kostId],
+        endDate: endDates[kostId],
         payment: {
           status: paymentDetails.status,
           ...paymentDetails,
@@ -399,103 +445,258 @@ const CheckoutPage = () => {
     return response.json();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Panggil data kost terlebih dahulu
-        const kostRes = await fetch(`/api/kost/get/${params.id}`);
-        if (!kostRes.ok) {
-          throw new Error(`HTTP error! status: ${kostRes.status}`);
-        }
-        const kostData = await kostRes.json();
-        setKost(kostData);
+  // Menangani proses checkout
+  const handleCheckout = async () => {
+    if (!validateForm()) return;
 
-        // Setelah data kost berhasil didapatkan, panggil data owner
-        if (kostData.userRef) {
-          const ownerRes = await fetch(`/api/user/${kostData.userRef}`);
-          if (ownerRes.ok) {
-            const ownerData = await ownerRes.json();
-            setOwner(ownerData);
+    try {
+      if (paymentMethod === "midtrans") {
+        for (const kost of kosts) {
+          const tokenResponse = await fetch("/api/orders/create-token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              kostId: kost._id,
+              duration: durations[kost._id],
+              amount: kost.price * durations[kost._id],
+              startDate: startDates[kost._id],
+              endDate: endDates[kost._id],
+              paymentMethod,
+              tenant: tenantForm,
+              ownerId: owners[kost._id]?._id,
+              userId: currentUser._id,
+            }),
+          });
+
+          if (!tokenResponse.ok) {
+            throw new Error(`HTTP error! status: ${tokenResponse.status}`);
+          }
+
+          const tokenData = await tokenResponse.json();
+
+          if (window.snap && tokenData.token) {
+            await new Promise((resolve, reject) => {
+              window.snap.pay(tokenData.token, {
+                onSuccess: async (result) => {
+                  try {
+                    await createOrder(kost._id, {
+                      ...result,
+                      status: "paid",
+                      paymentMethod: "midtrans",
+                    });
+                    resolve();
+                  } catch (error) {
+                    reject(error);
+                  }
+                },
+                onPending: (result) => {
+                  Swal.fire({
+                    icon: "info",
+                    title: `Pembayaran Pending untuk ${kost.name}`,
+                    text: "Silakan selesaikan pembayaran Anda",
+                  });
+                  resolve();
+                },
+                onError: (error) => {
+                  reject(error);
+                },
+                onClose: () => {
+                  resolve();
+                },
+              });
+            });
           }
         }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+
+        // Show success message after all orders are processed
+        Swal.fire({
+          icon: "success",
+          title: "Semua Pembayaran Berhasil!",
+          text: "Pesanan Anda telah dikonfirmasi",
+          confirmButtonColor: "#2563eb",
+        }).then(() => navigate("/my-orders"));
+      } else if (paymentMethod === "cash") {
+        // Process cash payments for each kost
+        for (const kost of kosts) {
+          await createOrder(kost._id, {
+            status: "pending",
+            paymentMethod: "cash",
+          });
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Order Berhasil!",
+          text: "Silakan hubungi pemilik kost untuk pembayaran",
+          confirmButtonColor: "#2563eb",
+        }).then(() => navigate("/my-orders"));
       }
-    };
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Terjadi Kesalahan",
+        text: error.message || "Mohon coba lagi nanti",
+      });
+    }
+  };
 
-    fetchData();
-  }, [params.id]);
-
+  // 7. Render
   if (loading) return <p className="my-7 text-center text-2xl">Memuat...</p>;
   if (error)
     return <p className="my-7 text-center text-2xl">Terjadi kesalahan!</p>;
-  if (!kost) return null;
+  if (!kosts) return null;
 
   return (
+    // Kontainer utama dengan latar belakang dan padding
     <div className="min-h-screen bg-surface p-6">
+      {/* Pembungkus konten dengan lebar maksimum dan spasi antar bagian */}
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header */}
         <h1 className="text-3xl font-bold text-onsurface">Checkout</h1>
 
-        {/* Informasi Kost dan Pemilik */}
-        <div className="rounded-xl bg-background p-6 shadow-lg">
-          <div className="mb-6 border-b pb-4">
-            <div className="flex items-center gap-3">
-              <BsHouseDoor className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">{kost.name}</h2>
-            </div>
-            <p className="mt-2 text-gray-600">{kost.location}</p>
-            <div className="mt-4 flex flex-wrap gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Harga per Bulan</p>
-                <p className="text-lg font-semibold text-primary">
-                  Rp {kost.price.toLocaleString("id-ID")}
-                </p>
+        {/* Kartu Informasi Kost - Ditampilkan untuk setiap kost */}
+        {kosts.map((kost) => (
+          <div
+            key={kost._id}
+            className="rounded-xl bg-background p-6 shadow-lg"
+          >
+            {/* Header Kost dengan Nama dan Lokasi */}
+            <div className="mb-6 border-b pb-4">
+              <div className="flex items-center gap-3">
+                <BsHouseDoor className="h-6 w-6 text-primary" />
+                <h2 className="text-xl font-semibold">
+                  {kost.name || "Nama Kost Tidak Diketahui"}
+                </h2>
               </div>
-              {kost.originalPrice > kost.price && (
+              <p className="mt-2 text-gray-600">
+                {kost.location || "Lokasi Tidak Diketahui"}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-4">
+                {/* Informasi Harga */}
                 <div>
-                  <p className="text-sm text-gray-500">Harga Normal</p>
-                  <p className="text-lg text-gray-400 line-through">
-                    Rp {kost.originalPrice.toLocaleString("id-ID")}
+                  <p className="text-sm text-gray-500">Harga per Bulan</p>
+                  <p className="text-lg font-semibold text-primary">
+                    Rp {kost.price?.toLocaleString("id-ID") || "N/A"}
                   </p>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {owner && (
-            <div className="flex items-start gap-4">
-              <img
-                src={owner.avatar}
-                alt={owner.username}
-                className="h-12 w-12 rounded-full object-cover"
-              />
-              <div>
-                <div className="flex items-center gap-2">
-                  <BsPerson className="h-5 w-5 text-primary" />
-                  <h3 className="font-medium">Pemilik Kost</h3>
-                </div>
-                <p className="mt-1">{owner.username}</p>
-                <p className="text-sm text-gray-500">{owner.email}</p>
-                {kost.contact && (
-                  <p className="text-sm text-gray-500">
-                    Telepon: {kost.contact.phone}
-                  </p>
+                {/* Menampilkan harga asli jika ada diskon */}
+                {kost.originalPrice > kost.price && kost.originalPrice && (
+                  <div>
+                    <p className="text-sm text-gray-500">Harga Normal</p>
+                    <p className="text-lg text-gray-400 line-through">
+                      Rp {kost.originalPrice.toLocaleString("id-ID")}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Form Penyewa */}
+            {/* Pilihan Durasi untuk setiap kost */}
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {[1, 3, 6, 12].map((months) => (
+                <button
+                  key={`${kost._id}-${months}`}
+                  onClick={() => handleDurationChange(kost._id, months)}
+                  className={`rounded-lg border-2 p-4 text-center transition-all ${
+                    durations[kost._id] === months
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-gray-200 hover:border-primary/50"
+                  }`}
+                >
+                  <div className="font-medium">{months} Bulan</div>
+                  <div className="mt-1 text-sm text-gray-500">
+                    Rp {(kost.price * months)?.toLocaleString("id-ID") || "N/A"}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Pemilihan Tanggal untuk setiap kost */}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                {/* Input Tanggal Mulai */}
+                <label className="mb-1 block text-sm font-medium">
+                  Tanggal Mulai
+                </label>
+                <input
+                  type="date"
+                  value={formatDateForInput(startDates[kost._id])}
+                  onChange={(e) =>
+                    handleStartDateChange(kost._id, e.target.value)
+                  }
+                  min={formatDateForInput(new Date())}
+                  className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  {formatDateForDisplay(startDates[kost._id])}
+                </p>
+              </div>
+              {/* Tampilan Tanggal Berakhir (hanya baca) */}
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Tanggal Berakhir
+                </label>
+                <input
+                  type="date"
+                  value={formatDateForInput(
+                    endDates[kost._id] ||
+                      calculateEndDate(
+                        startDates[kost._id],
+                        durations[kost._id] || 1,
+                      ),
+                  )}
+                  disabled
+                  className="w-full rounded-lg border bg-gray-50 p-2"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  {formatDateForDisplay(
+                    endDates[kost._id] ||
+                      calculateEndDate(
+                        startDates[kost._id],
+                        durations[kost._id] || 1,
+                      ),
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Informasi Pemilik */}
+            {owners[kost._id] && (
+              <div className="mt-6 flex items-start gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <BsPerson className="h-5 w-5 text-primary" />
+                    <h3 className="font-medium">Pemilik Kost</h3>
+                  </div>
+                  <p className="mt-1">
+                    {owners[kost._id].username || "Nama Tidak Diketahui"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {owners[kost._id].email || "Email Tidak Tersedia"}
+                  </p>
+                  {kost.contact?.phone && (
+                    <p className="text-sm text-gray-500">
+                      Telepon: {kost.contact.phone}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Formulir Informasi Penyewa */}
         <div className="rounded-xl bg-background p-6 shadow-lg">
           <div className="mb-4">
             <h2 className="text-xl font-semibold">Informasi Pribadi</h2>
           </div>
+          {/* Grid dua kolom untuk field formulir */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Kolom Kiri */}
             <div className="space-y-4">
+              {/* Input Nama */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Nama Lengkap
@@ -509,7 +710,7 @@ const CheckoutPage = () => {
                   }
                 />
               </div>
-
+              {/* Input Email (Dinonaktifkan) */}
               <div>
                 <label className="mb-1 block text-sm font-medium">Email</label>
                 <input
@@ -519,7 +720,7 @@ const CheckoutPage = () => {
                   disabled
                 />
               </div>
-
+              {/* Input Pekerjaan */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Pekerjaan
@@ -534,8 +735,9 @@ const CheckoutPage = () => {
                 />
               </div>
             </div>
-
+            {/* Kolom Kanan */}
             <div className="space-y-4">
+              {/* Input Nomor Telepon */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Nomor Telepon
@@ -549,7 +751,7 @@ const CheckoutPage = () => {
                   }
                 />
               </div>
-
+              {/* Input Nomor Identitas (KTP) */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Nomor Identitas (KTP)
@@ -566,6 +768,7 @@ const CheckoutPage = () => {
                   }
                 />
               </div>
+              {/* Unggah Foto KTP */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Foto KTP
@@ -578,16 +781,19 @@ const CheckoutPage = () => {
                     ref={fileRef}
                     className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
                   />
+                  {/* Indikator Progres Upload */}
                   {filePerc > 0 && filePerc < 100 && (
                     <div className="text-sm text-gray-500">
                       Sedang mengunggah... {filePerc}%
                     </div>
                   )}
+                  {/* Pesan Error */}
                   {fileUploadError && (
                     <div className="text-sm text-red-500">
                       Error: Gagal mengunggah gambar
                     </div>
                   )}
+                  {/* Pratinjau Gambar */}
                   {tenantForm.identityImage && (
                     <div className="relative h-40 w-full">
                       <img
@@ -602,10 +808,11 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Emergency Contact Section */}
+          {/* Bagian Kontak Darurat */}
           <div className="mt-6">
             <h3 className="mb-4 text-lg font-medium">Kontak Darurat</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Nama Kontak Darurat */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Nama Kontak Darurat
@@ -625,6 +832,7 @@ const CheckoutPage = () => {
                   }
                 />
               </div>
+              {/* Nomor Telepon Darurat */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Nomor Telepon Darurat
@@ -644,6 +852,7 @@ const CheckoutPage = () => {
                   }
                 />
               </div>
+              {/* Hubungan */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Hubungan
@@ -667,75 +876,13 @@ const CheckoutPage = () => {
           </div>
         </div>
 
-        {/* Pilihan Durasi */}
-        <div className="rounded-xl bg-background p-6 shadow-lg">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Durasi Penyewaan</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[1, 3, 6, 12].map((months) => (
-              <button
-                key={months}
-                onClick={() => setDuration(months)}
-                className={`rounded-lg border-2 p-4 text-center transition-all ${
-                  duration === months
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-gray-200 hover:border-primary/50"
-                }`}
-              >
-                <div className="font-medium">
-                  {months} Bulan{months > 1 ? "" : ""}
-                </div>
-                <div className="mt-1 text-sm text-gray-500">
-                  Rp {(kost.price * months).toLocaleString("id-ID")}
-                </div>
-                {duration === months && (
-                  <BsCheckCircleFill className="mx-auto mt-2 text-primary" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Date Selection */}
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Tanggal Mulai
-              </label>
-              <input
-                type="date"
-                value={formatDateForInput(startDate)}
-                onChange={handleStartDateChange}
-                min={formatDateForInput(new Date())}
-                className="w-full rounded-lg border p-2 outline-none focus:ring-2 focus:ring-primary"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                {formatDateForDisplay(startDate)}
-              </p>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Tanggal Berakhir
-              </label>
-              <input
-                type="date"
-                value={formatDateForInput(endDate)}
-                disabled
-                className="w-full rounded-lg border bg-gray-50 p-2"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                {formatDateForDisplay(endDate)}
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Metode Pembayaran */}
         <div className="rounded-xl bg-background p-6 shadow-lg">
           <div className="mb-4">
             <h2 className="text-xl font-semibold">Metode Pembayaran</h2>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Opsi Pembayaran Midtrans */}
             <button
               onClick={() => setPaymentMethod("midtrans")}
               className={`flex items-center rounded-lg border-2 p-4 transition-all ${
@@ -755,7 +902,7 @@ const CheckoutPage = () => {
                 <BsCheckCircleFill className="ml-auto text-primary" />
               )}
             </button>
-
+            {/* Opsi Pembayaran Tunai */}
             <button
               onClick={() => setPaymentMethod("cash")}
               className={`flex items-center rounded-lg border-2 p-4 transition-all ${
@@ -782,11 +929,15 @@ const CheckoutPage = () => {
         <div className="flex flex-col items-center justify-between rounded-xl bg-background p-6 shadow-lg sm:flex-row">
           <div className="mb-4 sm:mb-0">
             <h3 className="text-lg font-medium">Total Pembayaran</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Rp {kost.price.toLocaleString("id-ID")} × {duration} bulan
-            </p>
-            <p className="text-2xl font-bold text-primary">
-              Rp {(kost.price * duration).toLocaleString("id-ID")}
+            {kosts.map((kost) => (
+              <p key={kost._id} className="mt-1 text-sm text-gray-500">
+                {kost.name}: Rp {kost.price.toLocaleString("id-ID")} ×{" "}
+                {durations[kost._id]} bulan = Rp{" "}
+                {(kost.price * durations[kost._id]).toLocaleString("id-ID")}
+              </p>
+            ))}
+            <p className="mt-2 text-2xl font-bold text-primary">
+              Total: Rp {calculateTotalAmount().toLocaleString("id-ID")}
             </p>
           </div>
           <button

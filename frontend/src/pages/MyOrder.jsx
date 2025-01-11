@@ -56,6 +56,7 @@ const MyOrder = () => {
   const [orderedOrders, setOrderedOrders] = useState([]);
   const [pendingOrders, setPendingOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedReview, setSelectedReview] = useState(null);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedKostId, setSelectedKostId] = useState(null);
@@ -155,7 +156,16 @@ const MyOrder = () => {
   };
 
   const handleReviewClick = (kostId) => {
+    // Find order with matching kostId
+    const order = orderedOrders.find((order) => order.kostId._id === kostId);
+
+    // Find existing review for current user
+    const existingReview = order?.kostId.reviews.find(
+      (review) => review.user === currentUser._id,
+    );
+
     setSelectedKostId(kostId);
+    setSelectedReview(existingReview);
     setIsReviewModalOpen(true);
   };
 
@@ -205,6 +215,7 @@ const MyOrder = () => {
               order={order}
               onViewDetail={() => setSelectedOrder(order)}
               owner={false}
+              currentUser={currentUser}
               onReview={handleReviewClick}
             />
           ))
@@ -232,6 +243,7 @@ const MyOrder = () => {
           onClose={handleReviewClose}
           kostId={selectedKostId}
           onReviewSubmitted={handleReviewSubmitted}
+          existingReview={selectedReview}
         />
       )}
     </div>

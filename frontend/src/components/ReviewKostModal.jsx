@@ -1,14 +1,27 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Error } from "mongoose";
-import React, { useState } from "react";
-import { FaPaperPlane, FaStar, FaTimes } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import { FaPaperPlane, FaStar, FaTimes, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
+const ReviewKostModal = ({
+  isOpen,
+  onClose,
+  kostId,
+  onReviewSubmitted,
+  existingReview = null,
+}) => {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (existingReview) {
+      setRating(existingReview.rating);
+      setComment(existingReview.comment);
+    }
+  }, [existingReview, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,8 +48,14 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/kost/addReview/${kostId}`, {
-        method: "POST",
+      const endpoint = existingReview
+        ? `/api/kost/updateReview/${kostId}`
+        : `/api/kost/addReview/${kostId}`;
+
+      const method = existingReview ? "PUT" : "POST";
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -46,6 +65,7 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
           comment: comment.trim(),
         }),
       });
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -55,7 +75,9 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
       Swal.fire({
         icon: "success",
         title: "Berhasil!",
-        text: "Terima kasih atas ulasan Anda",
+        text: existingReview
+          ? "Ulasan berhasil diperbarui"
+          : "Terima kasih atas ulasan Anda",
         timer: 2000,
         showConfirmButton: false,
       });
@@ -66,9 +88,60 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
       console.error("Error submitting review:", error);
       Swal.fire({
         icon: "error",
-        title: "Gagal Mengirim Ulasan",
+        title: existingReview
+          ? "Gagal Memperbarui Ulasan"
+          : "Gagal Mengirim Ulasan",
         text: error.message || "Terjadi kesalahan saat mengirim ulasan",
         confirmButtonColor: "#3085d6",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Hapus Ulasan?",
+        text: "Anda yakin ingin menghapus ulasan ini?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Ya, Hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        setLoading(true);
+        const response = await fetch(`/api/kost/deleteReview/${kostId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            (await response.json()).message || "Failed to delete review",
+          );
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Ulasan berhasil dihapus",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        onReviewSubmitted(null);
+        handleClose();
+      }
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menghapus Ulasan",
+        text: error.message || "Terjadi kesalahan saat menghapus ulasan",
       });
     } finally {
       setLoading(false);
@@ -85,7 +158,6 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -94,16 +166,16 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
             onClick={handleClose}
           />
 
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 transform rounded-lg bg-white p-6 shadow-xl"
           >
-            {/* Button Close */}
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Berikan Ulasan</h2>
+              <h2 className="text-xl font-semibold">
+                {existingReview ? "Edit Ulasan" : "Berikan Ulasan"}
+              </h2>
               <button
                 onClick={handleClose}
                 className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
@@ -111,9 +183,8 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
                 <FaTimes />
               </button>
             </div>
-            {/* Form Rating */}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Rating Stars */}
               <div className="flex flex-col items-center space-y-2">
                 <label className="text-sm font-medium text-gray-600">
                   Rating Anda
@@ -144,7 +215,7 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
                   })}
                 </div>
               </div>
-              {/* Comment Input */}
+
               <div>
                 <label
                   htmlFor="comment"
@@ -161,22 +232,40 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
                   placeholder="Bagikan pengalaman Anda..."
                 />
               </div>
-              {/* Submit Button */}
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.92 }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
-              >
-                {loading ? (
-                  "Mengirim..."
-                ) : (
-                  <>
-                    <FaPaperPlane /> <span>Kirim Ulasan</span>
-                  </>
+
+              <div className="flex gap-2">
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.92 }}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
+                >
+                  {loading ? (
+                    "Mengirim..."
+                  ) : (
+                    <>
+                      <FaPaperPlane />
+                      <span>
+                        {existingReview ? "Perbarui Ulasan" : "Kirim Ulasan"}
+                      </span>
+                    </>
+                  )}
+                </motion.button>
+
+                {existingReview && (
+                  <motion.button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.92 }}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-white transition-colors hover:bg-red-700 disabled:bg-red-400"
+                  >
+                    <FaTrash />
+                  </motion.button>
                 )}
-              </motion.button>
+              </div>
             </form>
           </motion.div>
         </>
@@ -184,5 +273,4 @@ const ReviewKostModal = ({ isOpen, onClose, kostId, onReviewSubmitted }) => {
     </AnimatePresence>
   );
 };
-
 export default ReviewKostModal;

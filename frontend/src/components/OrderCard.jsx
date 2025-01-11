@@ -48,6 +48,13 @@ const OrderCard = ({
     }
   };
 
+  const existingReview = order.kostId.reviews.find(
+    (review) => review.user === currentUser._id,
+  );
+
+  const handleReviewClick = () => {
+    onReview(order.kostId._id, existingReview);
+  };
   const formatPhoneNumber = (phoneNumber) => {
     if (!phoneNumber.startsWith("+")) {
       return `+62${phoneNumber.substring(1)}`;
@@ -188,11 +195,11 @@ const OrderCard = ({
             {/* Add Review Button - Only show for paid orders and non-owners */}
             {order.payment.status.toLowerCase() === "paid" && !owner && (
               <button
-                onClick={() => onReview(order.kostId._id)}
+                onClick={handleReviewClick}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
               >
                 <FaStar className="text-lg" />
-                <span>Beri Ulasan</span>
+                <span>{existingReview ? "Edit Ulasan" : "Beri Ulasan"}</span>
               </button>
             )}
             {order.payment.status === "pending" && (

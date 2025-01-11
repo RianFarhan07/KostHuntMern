@@ -275,7 +275,7 @@ export const addReview = async (req, res) => {
     }
 
     const existingReview = kost.reviews.find(
-      (review) => review.user.toString === userId
+      (review) => review.user.toString() === userId
     );
 
     if (existingReview) {
@@ -300,6 +300,90 @@ export const addReview = async (req, res) => {
       .json({ message: "Review added successfully", review: newReview });
   } catch (error) {
     console.error("Error adding review:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateReview = async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const { id: kostId } = req.params;
+    const { rating, comment } = req.body;
+
+    const kost = await Kost.findById(kostId);
+
+    if (!kost) {
+      return res.status(404).json({ message: "Kost not found" });
+    }
+
+    if (!rating || !comment) {
+      return res
+        .status(400)
+        .json({ message: "Rating and comment are required" });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
+    }
+
+    const reviewIndex = kost.reviews.findIndex(
+      (review) => review.user.toString() === userId
+    );
+
+    if (reviewIndex === -1) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    // Preserve existing review data while updating
+    const existingReview = kost.reviews[reviewIndex];
+    kost.reviews[reviewIndex] = {
+      ...existingReview,
+      rating,
+      comment,
+      updatedAt: new Date().toISOString(),
+      user: existingReview.user, // Ensure user reference is preserved
+    };
+
+    await kost.save();
+
+    return res.status(200).json({
+      message: "Review updated successfully",
+      review: kost.reviews[reviewIndex],
+    });
+  } catch (error) {
+    console.error("Error updating review:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteReview = async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const { id: kostId } = req.params;
+
+    const kost = await Kost.findById(kostId);
+
+    if (!kost) {
+      return res.status(404).json({ message: "Kost not found" });
+    }
+
+    // Find the review index
+    const reviewIndex = kost.reviews.findIndex(
+      (review) => review.user.toString() === userId
+    );
+
+    if (reviewIndex === -1) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    kost.reviews.splice(reviewIndex, 1);
+    await kost.save();
+
+    return res.status(200).json({ message: "Review deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting review:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };

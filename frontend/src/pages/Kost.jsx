@@ -215,6 +215,14 @@ const KostDetail = () => {
       showLoginAlert();
       return;
     }
+    if (!kost.availability) {
+      Swal.fire({
+        icon: "error",
+        title: "Kost Tidak Tersedia",
+        text: "kost yang dipilih sudah tidak tersedia. Silakan pilih kost lain.",
+      });
+      return;
+    }
     navigate(`/checkout/${kost._id}`);
   };
 

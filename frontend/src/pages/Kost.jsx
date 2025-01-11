@@ -30,6 +30,7 @@ const KostDetail = () => {
   const { id } = useParams();
   const [kost, setKost] = useState(null);
   const [owner, setOwner] = useState(null);
+  const [reviewUsers, setReviewUsers] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -48,6 +49,26 @@ const KostDetail = () => {
           const ownerRes = await fetch(`/api/user/${kostData.userRef}`);
           const ownerData = await ownerRes.json();
           setOwner(ownerData);
+        }
+
+        if (kostData.reviews?.length > 0) {
+          const userIds = kostData.reviews.map((review) => review.user);
+          const uniqueUserIds = [...new Set(userIds)];
+
+          const reviewerData = {};
+          await Promise.all(
+            uniqueUserIds.map(async (userId) => {
+              try {
+                const userRes = await fetch(`/api/user/${userId}`);
+                const userData = await userRes.json();
+                reviewerData[userId] = userData;
+              } catch (error) {
+                console.error(`Error fetching user ${userId}:`, error);
+                reviewerData[userId] = { username: "Unknown User" };
+              }
+            }),
+          );
+          setReviewUsers(reviewerData);
         }
       } catch (err) {
         setError(err.message);
@@ -362,22 +383,29 @@ const KostDetail = () => {
                 <div className="space-y-4">
                   {kost.reviews.map((review, index) => (
                     <div key={index} className="border-b pb-4 last:border-0">
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <FaStar
-                              key={i}
-                              className={
-                                i < review.rating
-                                  ? "text-yellow-400"
-                                  : "text-gray-300"
-                              }
-                            />
-                          ))}
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FaUser className="text-gray-400" />
+                          <span className="font-medium">
+                            {reviewUsers[review.user]?.username ||
+                              "Unknown User"}
+                          </span>
                         </div>
                         <span className="text-sm text-gray-500">
                           {new Date(review.createdAt).toLocaleDateString()}
                         </span>
+                      </div>
+                      <div className="mb-2 flex">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar
+                            key={i}
+                            className={
+                              i < review.rating
+                                ? "text-yellow-400"
+                                : "text-gray-300"
+                            }
+                          />
+                        ))}
                       </div>
                       <p className="text-gray-600">{review.comment}</p>
                     </div>

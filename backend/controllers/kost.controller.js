@@ -243,3 +243,63 @@ export const getRandomKost = async (req, res) => {
     });
   }
 };
+
+export const addReview = async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const { id: kostId } = req.params;
+    const { rating, comment } = req.body;
+
+    const kost = await Kost.findById(kostId);
+
+    if (!kost) {
+      return res.status(404).json({ messsage: "Kost not found" });
+    }
+
+    if (!rating || !comment) {
+      return res
+        .status(400)
+        .json({ message: "Rating and comment are required" });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
+    }
+
+    if (userId === kost.userRef) {
+      return res
+        .status(403)
+        .josn({ message: "You can't give review to your own kost" });
+    }
+
+    const existingReview = kost.reviews.find(
+      (review) => review.user.toString === userId
+    );
+
+    if (existingReview) {
+      return res
+        .status(403)
+        .json({ message: "You have already reviewed this kost" });
+    }
+
+    const newReview = {
+      user: userId,
+      rating,
+      comment,
+      createdAt: new Date().toISOString(),
+    };
+
+    kost.reviews.push(newReview);
+
+    await kost.save();
+
+    return res
+      .status(201)
+      .json({ message: "Review added successfully", review: newReview });
+  } catch (error) {
+    console.error("Error adding review:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};

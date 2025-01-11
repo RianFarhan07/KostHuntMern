@@ -170,6 +170,7 @@ const Tenant = () => {
               order={order}
               onViewDetail={() => setSelectedOrder(order)}
               isMyOrder={false}
+              owner={true}
             />
           ))
         ) : (

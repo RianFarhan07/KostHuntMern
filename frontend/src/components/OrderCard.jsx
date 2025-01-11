@@ -1,12 +1,11 @@
-import React from "react";
-import { FaCreditCard, FaWhatsapp } from "react-icons/fa";
+/* eslint-disable react/prop-types */
+import { FaCreditCard, FaStar, FaWhatsapp } from "react-icons/fa";
 import {
   FiClock,
   FiCalendar,
   FiUser,
   FiHome,
   FiCircle,
-  FiCreditCard,
   FiCheckCircle,
   FiXCircle,
   FiAlertCircle,
@@ -18,6 +17,7 @@ import { MdMoney } from "react-icons/md";
 const OrderCard = ({
   order,
   onViewDetail,
+  onReview,
   currentUser,
   showLoginAlert,
   owner,
@@ -185,6 +185,16 @@ const OrderCard = ({
             >
               Detail
             </button>
+            {/* Add Review Button - Only show for paid orders and non-owners */}
+            {order.payment.status.toLowerCase() === "paid" && !owner && (
+              <button
+                onClick={() => onReview(order.kostId._id)}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+              >
+                <FaStar className="text-lg" />
+                <span>Beri Ulasan</span>
+              </button>
+            )}
             {order.payment.status === "pending" && (
               <button
                 onClick={

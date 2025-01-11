@@ -16,6 +16,7 @@ import OrderCard from "../components/OrderCard";
 import OrderDetailModal from "../components/OrderDetailModal";
 import Swal from "sweetalert2";
 import { autoLogout } from "../redux/user/userSlice";
+import ReviewKostModal from "../components/ReviewKostModal";
 
 // Components remain the same
 const Tab = ({ active, onClick, children }) => (
@@ -57,6 +58,8 @@ const MyOrder = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedKostId, setSelectedKostId] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
   const dispatch = useDispatch();
   console.log(currentUser._id);
@@ -151,6 +154,23 @@ const MyOrder = () => {
     refreshOrders(); // Refresh orders when modal closes
   };
 
+  const handleReviewClick = (kostId) => {
+    setSelectedKostId(kostId);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewClose = () => {
+    setSelectedKostId(null);
+    setIsReviewModalOpen(false);
+    refreshOrders();
+  };
+
+  const handleReviewSubmitted = () => {
+    refreshOrders();
+    setIsReviewModalOpen(false);
+    setSelectedKostId(null);
+  };
+
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
 
@@ -185,6 +205,7 @@ const MyOrder = () => {
               order={order}
               onViewDetail={() => setSelectedOrder(order)}
               owner={false}
+              onReview={handleReviewClick}
             />
           ))
         ) : (
@@ -194,12 +215,23 @@ const MyOrder = () => {
         )}
       </div>
 
+      {/* Order Detail Modal */}
       {selectedOrder && (
         <OrderDetailModal
           isOpen={!!selectedOrder}
           onClose={handleModalClose}
           order={selectedOrder}
           owner={false}
+        />
+      )}
+
+      {/* Review Modal */}
+      {selectedKostId && (
+        <ReviewKostModal
+          isOpen={isReviewModalOpen}
+          onClose={handleReviewClose}
+          kostId={selectedKostId}
+          onReviewSubmitted={handleReviewSubmitted}
         />
       )}
     </div>

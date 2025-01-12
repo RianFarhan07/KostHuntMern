@@ -477,7 +477,14 @@ const KostDetail = () => {
                   </>
                 )}
               </div>
-              {kost.userRef !== currentUser?._id ? (
+              {currentUser && kost?.userRef === currentUser._id ? (
+                <div className="mt-4 text-sm text-gray-500">
+                  <p className="flex items-center gap-1">
+                    <FaUser className="text-primary" />
+                    Pemilik: Anda
+                  </p>
+                </div>
+              ) : (
                 <div className="mt-4 text-sm text-gray-500">
                   <p className="flex items-center gap-1">
                     <FaWhatsapp className="text-green-500" />
@@ -486,16 +493,7 @@ const KostDetail = () => {
                   {owner && (
                     <p className="flex items-center gap-1">
                       <FaUser className="text-primary" />
-                      {`Pemilik: ${owner.username}`}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-4 text-sm text-gray-500">
-                  {owner && (
-                    <p className="flex items-center gap-1">
-                      <FaUser className="text-primary" />
-                      {`Pemilik: Anda`}
+                      Pemilik: {owner.username}
                     </p>
                   )}
                 </div>

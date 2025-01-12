@@ -1,11 +1,14 @@
 // utils/midtrans/paymentService.js
 import midtransClient from "midtrans-client";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Inisialisasi konfigurasi Midtrans
 const midtransConfig = new midtransClient.Snap({
   isProduction: false,
-  serverKey: "SB-Mid-server-TmytAEJBQHROTmfilSQ3JPXR",
-  clientKey: "SB-Mid-client-yXBU6RXfgiTqgpp6",
+  serverKey: process.env.MIDTRANS_SERVER_KEY,
+  clientKey: process.env.MIDTRANS_CLIENT_KEY,
 });
 
 export const createMidtransTransaction = async (order) => {

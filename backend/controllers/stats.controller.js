@@ -238,7 +238,7 @@ export const getStatsForOwner = async (req, res) => {
     // Tenant Demographics
     const tenantDemographics = await Order.aggregate([
       {
-        $match: { ownerId: ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
@@ -247,6 +247,67 @@ export const getStatsForOwner = async (req, res) => {
           averageStayDuration: { $avg: "$duration" },
           averagePayment: { $avg: "$payment.amount" },
           totalRevenue: { $sum: "$payment.amount" },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    const reviewStats = await Kost.aggregate([
+      {
+        $match: { userRef: new mongoose.Types.ObjectId(ownerId) },
+      },
+      {
+        $unwind: "$reviews",
+      },
+      {
+        $group: {
+          _id: "$_id",
+          kostName: { $first: "$name" },
+          totalReviews: { $sum: 1 },
+          averageRating: { $avg: "$reviews.rating" },
+          ratings: {
+            $push: {
+              rating: "$reviews.rating",
+              comment: "$reviews.comment",
+              date: "$reviews.createdAt",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          kostName: 1,
+          totalReviews: 1,
+          averageRating: { $round: ["$averageRating", 1] },
+          ratings: 1,
+        },
+      },
+      { $sort: { totalReviews: -1 } },
+    ]);
+
+    // Facilities Analysis
+    const facilitiesStats = await Kost.aggregate([
+      {
+        $match: { userRef: new mongoose.Types.ObjectId(ownerId) },
+      },
+      {
+        $unwind: "$facilities",
+      },
+      {
+        $group: {
+          _id: "$facilities",
+          count: { $sum: 1 },
+          kosts: { $push: "$name" },
+        },
+      },
+      {
+        $project: {
+          facility: "$_id",
+          count: 1,
+          kosts: 1,
+          percentage: {
+            $multiply: [{ $divide: ["$count", { $size: "$kosts" }] }, 100],
+          },
         },
       },
       { $sort: { count: -1 } },

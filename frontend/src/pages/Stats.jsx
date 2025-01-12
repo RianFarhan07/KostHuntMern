@@ -46,7 +46,7 @@ const Stats = () => {
     fetchStats();
   }, []);
 
-  if (!stats) return <div>Loading...</div>;
+  if (!stats) return <div>Memuat...</div>;
 
   const StatCard = ({ icon: Icon, title, value, className }) => (
     <div className={`rounded-lg p-4 shadow-md ${className}`}>
@@ -61,7 +61,7 @@ const Stats = () => {
   );
 
   const paymentStatusData = {
-    labels: ["Pending", "Paid"],
+    labels: ["Belum Dibayar", "Sudah Dibayar"],
     datasets: [
       {
         data: [stats.basicStats.pendingPayments, stats.basicStats.paidPayments],
@@ -72,7 +72,7 @@ const Stats = () => {
   };
 
   const occupancyData = {
-    labels: ["Currently Occupied", "Ending Soon", "Available"],
+    labels: ["Terisi", "Segera Berakhir", "Tersedia"],
     datasets: [
       {
         data: [
@@ -82,6 +82,32 @@ const Stats = () => {
             stats.occupancyMetrics.currentlyOccupied,
         ],
         backgroundColor: ["#4CAF50", "#FFA500", "#2196F3"],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  const paymentMethodData = {
+    labels: ["Tunai", "Transfer"],
+    datasets: [
+      {
+        data: [
+          stats.basicStats.revenueStats.cashRevenue,
+          stats.basicStats.revenueStats.transferRevenue,
+        ],
+        backgroundColor: ["#9C27B0", "#3F51B5"],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  // Assuming we have tenant demographics data
+  const occupationData = {
+    labels: stats.tenantDemographics.slice(0, 4).map((demo) => demo._id),
+    datasets: [
+      {
+        data: stats.tenantDemographics.slice(0, 4).map((demo) => demo.count),
+        backgroundColor: ["#E91E63", "#009688", "#FF5722", "#795548"],
         borderWidth: 0,
       },
     ],
@@ -100,47 +126,49 @@ const Stats = () => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="mb-8 text-3xl font-bold">Dashboard Statistics</h1>
+      <h1 className="mb-8 text-3xl font-bold">Statistik Dashboard</h1>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           icon={FaHome}
-          title="Total Kosts"
+          title="Total Kost"
           value={stats.basicStats.totalKosts}
           className="bg-blue-50"
         />
         <StatCard
           icon={FaMoneyBillWave}
-          title="Total Orders"
+          title="Total Pesanan"
           value={stats.basicStats.totalOrders}
           className="bg-green-50"
         />
         <StatCard
           icon={FaUserFriends}
-          title="Current Occupancy"
-          value={`${stats.occupancyMetrics.currentlyOccupied} units`}
+          title="Kost Terisi"
+          value={`${stats.occupancyMetrics.currentlyOccupied} unit`}
           className="bg-purple-50"
         />
         <StatCard
           icon={FaClock}
-          title="Ending Soon"
+          title="Segera Berakhir"
           value={stats.occupancyMetrics.endingSoon}
           className="bg-yellow-50"
         />
         <StatCard
           icon={FaExclamationCircle}
-          title="Pending Payments"
+          title="Belum Dibayar"
           value={stats.basicStats.pendingPayments}
           className="bg-orange-50"
         />
         <StatCard
           icon={FaCheckCircle}
-          title="Paid Payments"
+          title="Sudah Dibayar"
           value={stats.basicStats.paidPayments}
           className="bg-green-50"
         />
@@ -148,38 +176,49 @@ const Stats = () => {
 
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-lg bg-white p-4 shadow">
-          <h2 className="mb-4 text-xl font-semibold">Payment Status</h2>
+          <h2 className="mb-4 text-xl font-semibold">Status Pembayaran</h2>
           <Doughnut data={paymentStatusData} options={chartOptions} />
         </div>
         <div className="rounded-lg bg-white p-4 shadow">
-          <h2 className="mb-4 text-xl font-semibold">Occupancy Status</h2>
+          <h2 className="mb-4 text-xl font-semibold">Status Ketersediaan</h2>
           <Doughnut data={occupancyData} options={chartOptions} />
         </div>
       </div>
 
+      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="rounded-lg bg-white p-4 shadow">
+          <h2 className="mb-4 text-xl font-semibold">Metode Pembayaran</h2>
+          <Doughnut data={paymentMethodData} options={chartOptions} />
+        </div>
+        <div className="rounded-lg bg-white p-4 shadow">
+          <h2 className="mb-4 text-xl font-semibold">Pekerjaan Penyewa</h2>
+          <Doughnut data={occupationData} options={chartOptions} />
+        </div>
+      </div>
+
       <div className="mt-6 rounded-lg bg-white p-4 shadow">
-        <h2 className="mb-4 text-xl font-semibold">Revenue Overview</h2>
+        <h2 className="mb-4 text-xl font-semibold">Ikhtisar Pendapatan</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="rounded bg-gray-50 p-3 text-center">
-            <p className="text-gray-600">Total Revenue</p>
+            <p className="text-gray-600">Total Pendapatan</p>
             <p className="text-2xl font-bold">
               {formatCurrency(stats.basicStats.revenueStats.totalRevenue)}
             </p>
           </div>
           <div className="rounded bg-gray-50 p-3 text-center">
-            <p className="text-gray-600">Average Revenue</p>
+            <p className="text-gray-600">Rata-rata Pendapatan</p>
             <p className="text-2xl font-bold">
               {formatCurrency(stats.basicStats.revenueStats.averageRevenue)}
             </p>
           </div>
           <div className="rounded bg-gray-50 p-3 text-center">
-            <p className="text-gray-600">Pending Revenue</p>
+            <p className="text-gray-600">Pendapatan Tertunda</p>
             <p className="text-2xl font-bold">
               {formatCurrency(stats.basicStats.revenueStats.pendingRevenue)}
             </p>
           </div>
           <div className="rounded bg-gray-50 p-3 text-center">
-            <p className="text-gray-600">Paid Revenue</p>
+            <p className="text-gray-600">Pendapatan Terbayar</p>
             <p className="text-2xl font-bold">
               {formatCurrency(stats.basicStats.revenueStats.paidRevenue)}
             </p>
@@ -187,30 +226,29 @@ const Stats = () => {
         </div>
       </div>
 
-      {/* Popular Kosts Section */}
       <div className="rounded-lg bg-white p-4 shadow">
-        <h2 className="mb-4 text-xl font-semibold">Popular Kosts</h2>
+        <h2 className="mb-4 text-xl font-semibold">Kost Populer</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Kost Name
+                  Nama Kost
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Location
+                  Lokasi
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Type
+                  Tipe
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Bookings
+                  Pemesanan
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Revenue
+                  Pendapatan
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Avg. Stay
+                  Rata-rata Durasi
                 </th>
               </tr>
             </thead>
@@ -222,7 +260,7 @@ const Stats = () => {
                   <td className="p-4">{kost.type}</td>
                   <td className="p-4">{kost.bookingCount}</td>
                   <td className="p-4">{formatCurrency(kost.totalRevenue)}</td>
-                  <td className="p-4">{`${kost.averageStayDuration} months`}</td>
+                  <td className="p-4">{`${kost.averageStayDuration} bulan`}</td>
                 </tr>
               ))}
             </tbody>
@@ -230,30 +268,29 @@ const Stats = () => {
         </div>
       </div>
 
-      {/* Tenant Statistics Section */}
       <div className="rounded-lg bg-white p-4 shadow">
-        <h2 className="mb-4 text-xl font-semibold">Tenant Statistics</h2>
+        <h2 className="mb-4 text-xl font-semibold">Statistik Penyewa</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Name
+                  Nama
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
                   Email
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Phone
+                  Telepon
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Occupation
+                  Pekerjaan
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Total Spent
+                  Total Pengeluaran
                 </th>
                 <th className="p-4 text-left text-sm font-semibold text-gray-600">
-                  Bookings
+                  Jumlah Pemesanan
                 </th>
               </tr>
             </thead>
@@ -273,28 +310,27 @@ const Stats = () => {
         </div>
       </div>
 
-      {/* Duration Statistics Section */}
       <div className="rounded-lg bg-white p-4 shadow">
-        <h2 className="mb-4 text-xl font-semibold">Stay Duration Analysis</h2>
+        <h2 className="mb-4 text-xl font-semibold">Analisis Durasi Tinggal</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {stats.durationStats.map((duration) => (
             <div key={duration._id} className="rounded bg-gray-50 p-4">
               <h3 className="mb-2 text-lg font-semibold">
-                {duration._id} Month Stay
+                Durasi {duration._id} Bulan
               </h3>
               <div className="space-y-2">
                 <p className="text-gray-600">
-                  Number of Bookings:{" "}
+                  Jumlah Pemesanan:{" "}
                   <span className="font-bold">{duration.count}</span>
                 </p>
                 <p className="text-gray-600">
-                  Average Revenue:{" "}
+                  Rata-rata Pendapatan:{" "}
                   <span className="font-bold">
                     {formatCurrency(duration.averageRevenue)}
                   </span>
                 </p>
                 <p className="text-gray-600">
-                  Total Revenue:{" "}
+                  Total Pendapatan:{" "}
                   <span className="font-bold">
                     {formatCurrency(duration.totalRevenue)}
                   </span>

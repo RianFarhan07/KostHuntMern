@@ -170,7 +170,7 @@ const ReviewKostModal = ({
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 transform rounded-lg bg-white p-6 shadow-xl"
+            className="fixed left-1/2 top-1/3 z-50 w-full max-w-md -translate-x-1/2 transform rounded-lg bg-white p-6 shadow-xl"
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold">

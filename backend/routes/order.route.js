@@ -11,12 +11,14 @@ import {
   updatePaymentStatus,
   uploadPaymentProof,
 } from "../controllers/order.controller.js";
+import { createMidtransTransaction } from "../utils/midtrans/paymentService.js";
 
 const router = express.Router();
 
 // Create new order
 router.post("/midtrans", verifyToken, createMidtransOrder);
 router.post("/cash", verifyToken, createCashOrder);
+router.post("/createToken", verifyToken, createMidtransTransaction);
 
 // Route for buyer to upload proof of payment
 router.put("/upload-payment-proof/:orderId", verifyToken, uploadPaymentProof); // Pembeli upload bukti pembayaran

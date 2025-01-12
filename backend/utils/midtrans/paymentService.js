@@ -3,9 +3,9 @@ import midtransClient from "midtrans-client";
 
 // Inisialisasi konfigurasi Midtrans
 const midtransConfig = new midtransClient.Snap({
-  isProduction: process.env.NODE_ENV === "production",
-  serverKey: process.env.MIDTRANS_SERVER_KEY,
-  clientKey: process.env.MIDTRANS_CLIENT_KEY,
+  isProduction: false,
+  serverKey: "SB-Mid-server-TmytAEJBQHROTmfilSQ3JPXR",
+  clientKey: "SB-Mid-client-yXBU6RXfgiTqgpp6",
 });
 
 export const createMidtransTransaction = async (order) => {
@@ -27,17 +27,19 @@ export const createMidtransTransaction = async (order) => {
         name: `Sewa Kost - ${order.duration} bulan`,
       },
     ],
-    callbacks: {
-      finish: `${process.env.FRONTEND_URL}/payment/finish`,
-      error: `${process.env.FRONTEND_URL}/payment/error`,
-      pending: `${process.env.FRONTEND_URL}/payment/pending`,
-    },
+    // callbacks: {
+    //   finish: `${process.env.FRONTEND_URL}/payment/finish`,
+    //   error: `${process.env.FRONTEND_URL}/payment/error`,
+    //   pending: `${process.env.FRONTEND_URL}/payment/pending`,
+    // },
   };
 
   try {
     const transaction = await midtransConfig.createTransaction(parameter);
     return transaction;
   } catch (error) {
+    console.log(error.message);
+    console.error("Midtrans Error:", error.message);
     throw new Error(`Midtrans Error: ${error.message}`);
   }
 };

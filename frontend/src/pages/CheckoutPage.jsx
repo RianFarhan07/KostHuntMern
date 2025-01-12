@@ -445,6 +445,35 @@ const CheckoutPage = () => {
     return response.json();
   };
 
+  const createOrderForMidtrans = async (kostId, paymentDetails) => {
+    const response = await fetch("/api/orders/midtrans", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        duration: durations[kostId],
+        paymentMethod: paymentDetails.paymentMethod,
+        tenant: tenantForm,
+        kostId: kostId,
+        ownerId: owners[kostId]?._id,
+        amount: kosts.find((k) => k._id === kostId).price * durations[kostId],
+        startDate: startDates[kostId],
+        endDate: endDates[kostId],
+        payment: {
+          status: paymentDetails.status,
+          ...paymentDetails,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  };
+
   // Menangani proses checkout
   const handleCheckout = async () => {
     if (!validateForm()) return;
@@ -452,71 +481,61 @@ const CheckoutPage = () => {
     try {
       if (paymentMethod === "midtrans") {
         for (const kost of kosts) {
-          const tokenResponse = await fetch("/api/orders/create-token", {
+          const response = await fetch("/api/orders/midtrans", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              kostId: kost._id,
               duration: durations[kost._id],
-              amount: kost.price * durations[kost._id],
+              paymentMethod: "midtrans",
+              tenant: tenantForm,
+              kostId: [kost._id],
+              ownerId: owners[kost._id]?._id,
+              amount:
+                kosts.find((k) => k._id === kost._id).price *
+                durations[kost._id],
               startDate: startDates[kost._id],
               endDate: endDates[kost._id],
-              paymentMethod,
-              tenant: tenantForm,
-              ownerId: owners[kost._id]?._id,
-              userId: currentUser._id,
+              payment: {
+                status: "pending",
+                paymentMethod: "midtrans",
+              },
             }),
           });
 
-          if (!tokenResponse.ok) {
-            throw new Error(`HTTP error! status: ${tokenResponse.status}`);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to initiate payment.");
           }
 
-          const tokenData = await tokenResponse.json();
+          const { paymentUrl, paymentToken } = data;
 
-          if (window.snap && tokenData.token) {
-            await new Promise((resolve, reject) => {
-              window.snap.pay(tokenData.token, {
-                onSuccess: async (result) => {
-                  try {
-                    await createOrder(kost._id, {
-                      ...result,
-                      status: "paid",
-                      paymentMethod: "midtrans",
-                    });
-                    resolve();
-                  } catch (error) {
-                    reject(error);
-                  }
-                },
-                onPending: (result) => {
-                  Swal.fire({
-                    icon: "info",
-                    title: `Pembayaran Pending untuk ${kost.name}`,
-                    text: "Silakan selesaikan pembayaran Anda",
-                  });
-                  resolve();
-                },
-                onError: (error) => {
-                  reject(error);
-                },
-                onClose: () => {
-                  resolve();
-                },
-              });
-            });
-          }
+          // Menampilkan popup Midtrans
+          window.snap.pay(paymentToken, {
+            onSuccess: () => {
+              Swal.fire(
+                "Success",
+                "Payment successful! Your order is confirmed.",
+                "success",
+              );
+            },
+            onPending: () => {
+              Swal.fire(
+                "Pending",
+                "Your payment is pending. Please complete it.",
+                "info",
+              );
+            },
+            onError: () => {
+              Swal.fire("Error", "Payment failed. Please try again.", "error");
+            },
+            onClose: () => {
+              Swal.fire("Cancelled", "Payment popup was closed.", "warning");
+            },
+          });
         }
-
-        // Show success message after all orders are processed
-        Swal.fire({
-          icon: "success",
-          title: "Semua Pembayaran Berhasil!",
-          text: "Pesanan Anda telah dikonfirmasi",
-          confirmButtonColor: "#2563eb",
-        }).then(() => navigate("/my-orders"));
       } else if (paymentMethod === "cash") {
         // Process cash payments for each kost
         for (const kost of kosts) {

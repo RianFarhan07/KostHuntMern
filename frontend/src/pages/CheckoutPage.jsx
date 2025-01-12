@@ -55,7 +55,7 @@ const CheckoutPage = () => {
   // Memuat script Midtrans saat komponen dimount
   useEffect(() => {
     const midtransScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
-    const myMidtransClientKey = "SB-Mid-client-yXBU6RXfgiTqgpp6";
+    const myMidtransClientKey = import.meta.env.MIDTRANS_CLIENT_KEY;
 
     let scriptTag = document.createElement("script");
     scriptTag.src = midtransScriptUrl;
@@ -510,7 +510,7 @@ const CheckoutPage = () => {
             throw new Error(data.message || "Failed to initiate payment.");
           }
 
-          const { paymentUrl, paymentToken } = data;
+          const { paymentToken } = data;
 
           // Menampilkan popup Midtrans
           window.snap.pay(paymentToken, {

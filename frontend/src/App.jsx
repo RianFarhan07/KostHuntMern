@@ -15,6 +15,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import MyOrder from "./pages/MyOrder";
 import Tenant from "./pages/Tenant";
 import Favorite from "./pages/Favorite";
+import Stats from "./pages/Stats";
 
 const App = () => {
   return (
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/addkost" element={<AddKost />} />
           <Route path="/update-kost/:id" element={<UpdateKost />} />
+          <Route path="/stats" element={<Stats />} />
           <Route path="/my-orders" element={<MyOrder />} />
           <Route path="/tenant" element={<Tenant />} />
         </Route>

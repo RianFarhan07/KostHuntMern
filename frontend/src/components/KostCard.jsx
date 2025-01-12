@@ -19,7 +19,7 @@ import {
 import { autoLogout } from "../redux/user/userSlice";
 import Swal from "sweetalert2";
 import ModernToggle from "./ModernToggle";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 ``;
 const KostCard = ({
   item: initialItem,
@@ -34,6 +34,15 @@ const KostCard = ({
   const navigate = useNavigate();
   const isFavorite = useSelector((state) => selectIsFavorite(state, item._id));
   const currentUser = useSelector((state) => state.user.currentUser);
+
+  const isCheckboxDisabled =
+    !item.availability || (currentUser && currentUser?._id === item.userRef);
+
+  useEffect(() => {
+    if (isCheckboxDisabled && isSelected) {
+      onToggleSelect(item._id);
+    }
+  }, [isCheckboxDisabled, isSelected, item._id, onToggleSelect]);
 
   const showToast = (icon, title) => {
     const Toast = Swal.mixin({
@@ -52,17 +61,6 @@ const KostCard = ({
 
   const handleAddToFavorite = (e) => {
     e.preventDefault();
-
-    if (!currentUser) {
-      dispatch(autoLogout());
-      navigate("/sign-in");
-      Swal.fire({
-        icon: "error",
-        title: "Session Expired",
-        text: "Your session has expired. Please sign in again.",
-      });
-      return;
-    }
 
     try {
       if (isFavorite) {
@@ -252,7 +250,7 @@ const KostCard = ({
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => onToggleSelect(item._id)}
-                disabled={!item.availability}
+                disabled={isCheckboxDisabled}
                 className="peer sr-only"
               />
               <div className="group relative h-6 w-6 overflow-hidden rounded-lg border-2 border-white bg-white/80 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-primary peer-checked:border-primary peer-checked:bg-primary/90 peer-disabled:cursor-not-allowed peer-disabled:border-gray-300 peer-disabled:bg-gray-100">

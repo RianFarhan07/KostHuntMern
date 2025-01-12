@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import Kost from "../models/kost.model.js";
+import mongoose from "mongoose";
 
 export const getStatsForOwner = async (req, res) => {
   try {
@@ -7,7 +8,7 @@ export const getStatsForOwner = async (req, res) => {
 
     // Basic Statistics
     const totalOrders = await Order.countDocuments({ ownerId });
-    const totalKosts = await Kost.countDocuments({ ownerId });
+    const totalKosts = await Kost.countDocuments({ userRef: ownerId });
     const pendingPayments = await Order.countDocuments({
       ownerId,
       "payment.status": "pending",
@@ -20,7 +21,7 @@ export const getStatsForOwner = async (req, res) => {
     // Revenue Statistics
     const revenueStats = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
@@ -69,16 +70,16 @@ export const getStatsForOwner = async (req, res) => {
       },
     ]);
 
-    // Monthly Statistics with Year-over-Year Comparison
+    // Monthly Statistics
     const monthlyStats = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
           _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
+            year: { $year: "$startDate" },
+            month: { $month: "$startDate" },
           },
           revenue: { $sum: "$payment.amount" },
           totalOrders: { $sum: 1 },
@@ -98,24 +99,6 @@ export const getStatsForOwner = async (req, res) => {
           transferPayments: {
             $sum: { $cond: [{ $eq: ["$payment.method", "transfer"] }, 1, 0] },
           },
-          pendingRevenue: {
-            $sum: {
-              $cond: [
-                { $eq: ["$payment.status", "pending"] },
-                "$payment.amount",
-                0,
-              ],
-            },
-          },
-          paidRevenue: {
-            $sum: {
-              $cond: [
-                { $eq: ["$payment.status", "paid"] },
-                "$payment.amount",
-                0,
-              ],
-            },
-          },
           averageStayDuration: { $avg: "$duration" },
           totalStayDuration: { $sum: "$duration" },
           uniqueTenants: { $addToSet: "$tenant.email" },
@@ -125,10 +108,10 @@ export const getStatsForOwner = async (req, res) => {
       { $sort: { "_id.year": -1, "_id.month": -1 } },
     ]);
 
-    // Popular Kosts with Detailed Metrics
+    // Popular Kosts
     const popularKosts = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
@@ -158,17 +141,9 @@ export const getStatsForOwner = async (req, res) => {
           averageStayDuration: 1,
           uniqueTenantsCount: { $size: "$uniqueTenants" },
           location: "$kostDetails.location",
-          occupancyRate: {
-            $multiply: [
-              {
-                $divide: [
-                  "$bookingCount",
-                  { $add: [1, "$kostDetails.totalRooms"] },
-                ],
-              },
-              100,
-            ],
-          },
+          city: "$kostDetails.city",
+          type: "$kostDetails.type",
+          price: "$kostDetails.price",
         },
       },
       { $sort: { bookingCount: -1 } },
@@ -178,28 +153,28 @@ export const getStatsForOwner = async (req, res) => {
     // Tenant Analysis
     const tenantStats = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
           _id: "$tenant.email",
+          tenantName: { $first: "$tenant.name" },
+          phone: { $first: "$tenant.phone" },
+          occupation: { $first: "$tenant.occupation" },
           totalBookings: { $sum: 1 },
           totalSpent: { $sum: "$payment.amount" },
           averageStayDuration: { $avg: "$duration" },
-          lastBooking: { $max: "$createdAt" },
-          occupations: { $addToSet: "$tenant.occupation" },
+          lastBooking: { $max: "$startDate" },
         },
       },
-      {
-        $sort: { totalBookings: -1 },
-      },
+      { $sort: { totalBookings: -1 } },
       { $limit: 10 },
     ]);
 
-    // Room Duration Analysis
+    // Duration Analysis
     const durationStats = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
@@ -212,10 +187,10 @@ export const getStatsForOwner = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    // Payment Analytics
+    // Payment Analysis
     const paymentAnalytics = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
       },
       {
         $group: {
@@ -238,7 +213,7 @@ export const getStatsForOwner = async (req, res) => {
         ownerId,
         startDate: { $lte: currentDate },
         endDate: { $gte: currentDate },
-        orderStatus: { $eq: "ordered" }, // Menambahkan validasi eksplisit
+        orderStatus: "ordered",
       }),
       // Upcoming bookings (next 30 days)
       Order.countDocuments({
@@ -247,7 +222,7 @@ export const getStatsForOwner = async (req, res) => {
           $gte: currentDate,
           $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
-        orderStatus: { $eq: "ordered" },
+        orderStatus: "ordered",
       }),
       // Contracts ending soon (next 30 days)
       Order.countDocuments({
@@ -256,35 +231,14 @@ export const getStatsForOwner = async (req, res) => {
           $gte: currentDate,
           $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
-        orderStatus: { $eq: "ordered" },
+        orderStatus: "ordered",
       }),
-    ]);
-
-    // Seasonal Analysis
-    const seasonalAnalysis = await Order.aggregate([
-      {
-        $match: { ownerId },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: "$startDate" },
-            month: { $month: "$startDate" },
-          },
-          bookings: { $sum: 1 },
-          revenue: { $sum: "$payment.amount" },
-          averageDuration: { $avg: "$duration" },
-        },
-      },
-      {
-        $sort: { "_id.year": -1, "_id.month": -1 },
-      },
     ]);
 
     // Tenant Demographics
     const tenantDemographics = await Order.aggregate([
       {
-        $match: { ownerId },
+        $match: { ownerId: ownerId },
       },
       {
         $group: {
@@ -298,16 +252,21 @@ export const getStatsForOwner = async (req, res) => {
       { $sort: { count: -1 } },
     ]);
 
-    // Return all statistics
     res.status(200).json({
       basicStats: {
         totalOrders,
         totalKosts,
+        pendingPayments,
+        paidPayments,
         revenueStats: revenueStats[0] || {
           totalRevenue: 0,
           averageRevenue: 0,
           maxRevenue: 0,
           minRevenue: 0,
+          pendingRevenue: 0,
+          paidRevenue: 0,
+          cashRevenue: 0,
+          transferRevenue: 0,
         },
       },
       monthlyStats,
@@ -320,7 +279,6 @@ export const getStatsForOwner = async (req, res) => {
         upcomingBookings: occupancyMetrics[1],
         endingSoon: occupancyMetrics[2],
       },
-      seasonalAnalysis,
       tenantDemographics,
     });
   } catch (error) {

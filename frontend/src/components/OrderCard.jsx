@@ -49,7 +49,7 @@ const OrderCard = ({
   };
 
   const existingReview = order.kostId.reviews.find(
-    (review) => review.user === currentUser._id,
+    (review) => review.user === currentUser?._id,
   );
 
   const handleReviewClick = () => {

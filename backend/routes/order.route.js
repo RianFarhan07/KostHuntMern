@@ -1,6 +1,7 @@
 import express from "express";
 import { verifyToken } from "../utils/verifyUser.js";
 import {
+  checkOrderStatus,
   createCashOrder,
   createMidtransOrder,
   getMyOrders,
@@ -19,6 +20,8 @@ const router = express.Router();
 router.post("/midtrans", verifyToken, createMidtransOrder);
 router.post("/cash", verifyToken, createCashOrder);
 router.post("/createToken", verifyToken, createMidtransTransaction);
+
+router.get("/check-status/:orderId", verifyToken, checkOrderStatus);
 
 // Route for buyer to upload proof of payment
 router.put("/upload-payment-proof/:orderId", verifyToken, uploadPaymentProof); // Pembeli upload bukti pembayaran

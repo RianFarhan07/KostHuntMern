@@ -76,7 +76,7 @@ const orderSchema = new mongoose.Schema(
       },
       status: {
         type: String,
-        enum: ["pending", "paid", "failed"],
+        enum: ["pending", "paid", "failed", "challenge"],
         default: "pending",
       },
       amount: {
@@ -86,9 +86,12 @@ const orderSchema = new mongoose.Schema(
       // Khusus untuk Midtrans
       midtrans: {
         transactionId: String,
+        transactionStatus: String,
+        fraudStatus: String,
+        transactionTime: String,
+        paymentType: String,
         paymentToken: String,
         paymentUrl: String,
-        paidAt: Date,
       },
       // Khusus untuk Cash
       cash: {

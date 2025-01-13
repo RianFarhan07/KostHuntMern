@@ -15,7 +15,11 @@ const port = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // URL frontend kamu
+    origin: [
+      "http://localhost:5173",
+      "https://app.midtrans.com",
+      "https://api.midtrans.com",
+    ], // URL frontend kamu
     methods: ["GET", "POST", "PUT", "DELETE"], // Metode HTTP yang diizinkan
     credentials: true, // Jika menggunakan cookies atau autentikasi
   })

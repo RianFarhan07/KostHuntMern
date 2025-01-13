@@ -1,4 +1,7 @@
-import { createMidtransTransaction } from "../utils/midtrans/paymentService.js";
+import {
+  createMidtransTransaction,
+  midtransConfig,
+} from "../utils/midtrans/paymentService.js";
 import Order from "../models/order.model.js";
 
 // Create Order Controller
@@ -40,17 +43,37 @@ export const createMidtransOrder = async (req, res) => {
       orderStatus: "pending",
     });
 
+    // Log setelah membuat order baru
+    console.log("=== CREATE ORDER LOGS ===");
+    console.log("New Order ID:", order._id);
+    console.log("Order Details:", order);
+
     // Generate Midtrans transaction
     const transaction = await createMidtransTransaction(order);
 
+    console.log("=== MIDTRANS TRANSACTION LOGS ===");
+    console.log("Midtrans Transaction:", transaction);
+    console.log("Order ID sent to Midtrans:", order._id);
+
     // Add Midtrans details to the order
     order.payment.midtrans = {
-      // transactionId: transaction.transaction_id,
+      transactionId: order._id.toString(),
       paymentToken: transaction.token,
       paymentUrl: transaction.redirect_url,
     };
 
     await order.save();
+
+    // Log setelah save
+    console.log("=== AFTER SAVE LOGS ===");
+    console.log("Saved Order ID:", order._id);
+    console.log("Saved Order:", order);
+
+    // Verify order exists in database
+    const verifyOrder = await Order.findById(order._id);
+    console.log("=== VERIFICATION LOGS ===");
+    console.log("Verified Order exists:", !!verifyOrder);
+    console.log("Verified Order ID:", verifyOrder?._id);
 
     console.log(transaction);
 
@@ -155,33 +178,153 @@ export const createCashOrder = async (req, res) => {
 // Handle Payment Notification (Midtrans)
 export const handlePaymentNotification = async (req, res) => {
   try {
-    const { order_id, transaction_status } = req.body;
+    console.log("=== PAYMENT NOTIFICATION LOGS ===");
+    console.log("Incoming Order ID:", req.body.order_id);
+    console.log("Raw notification body:", req.body);
 
-    const order = await Order.findOne({
-      "payment.midtrans.transactionId": order_id,
-    });
+    const midtransNotif = await midtransConfig.transaction.notification(
+      req.body
+    );
+    console.log("Processed notification:", midtransNotif);
+
+    const orderId = midtransNotif.order_id;
+    console.log("Order ID to be updated:", orderId);
+    const transactionStatus = midtransNotif.transaction_status;
+    const fraudStatus = midtransNotif.fraud_status;
+
+    const order = await Order.findById(orderId);
+    console.log("=== ORDER VERIFICATION ===");
+    console.log("Order exists in database:", !!order);
+    console.log("Found Order ID:", order?._id);
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      console.log("Order not found:", orderId);
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
     }
 
-    if (transaction_status === "settlement") {
-      order.payment.status = "paid";
-      order.orderStatus = "ordered";
+    let updatedPaymentStatus = "pending";
+    let updatedOrderStatus = "pending";
+
+    // Handle various transaction status
+    if (transactionStatus === "capture") {
+      if (fraudStatus === "challenge") {
+        updatedPaymentStatus = "challenge";
+      } else if (fraudStatus === "accept") {
+        updatedPaymentStatus = "paid";
+        updatedOrderStatus = "ordered";
+      }
+    } else if (transactionStatus === "settlement") {
+      updatedPaymentStatus = "paid";
+      updatedOrderStatus = "ordered";
     } else if (
-      transaction_status === "cancel" ||
-      transaction_status === "expire"
+      transactionStatus === "cancel" ||
+      transactionStatus === "deny" ||
+      transactionStatus === "expire"
     ) {
-      order.payment.status = "failed";
-      order.orderStatus = "cancelled";
+      updatedPaymentStatus = "failed";
+      updatedOrderStatus = "cancelled";
+    } else if (transactionStatus === "pending") {
+      updatedPaymentStatus = "pending";
+      updatedOrderStatus = "pending";
     }
 
-    await order.save();
-    res.status(200).json({ success: true, message: "Payment status updated" });
+    console.log("Before update - Order:", order);
+    // Update order with new status and payment details
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: orderId },
+      {
+        $set: {
+          "payment.status": updatedPaymentStatus,
+          "payment.midtrans": {
+            transactionId: midtransNotif.transaction_id,
+            transactionStatus: midtransNotif.transaction_status,
+            fraudStatus: midtransNotif.fraud_status,
+            transactionTime: midtransNotif.transaction_time,
+            paymentType: midtransNotif.payment_type,
+          },
+          orderStatus: updatedOrderStatus,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    // Log hasil update
+    console.log("Updated order:", updatedOrder);
+
+    // Verifikasi update berhasil
+    const verifiedOrder = await Order.findById(orderId);
+    console.log("Verified order:", verifiedOrder);
+
+    console.log("After update - Order:", updatedOrder);
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment notification handled successfully",
+      order: updatedOrder,
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error handling payment notification:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const checkOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // If order is still pending, check status directly with Midtrans
+    if (order.payment.status === "pending") {
+      try {
+        const statusResponse = await coreMidtrans.transaction.status(orderId);
+
+        // Update order based on latest status
+        if (
+          (statusResponse.transaction_status === "settlement" ||
+            statusResponse.transaction_status === "capture") &&
+          statusResponse.fraud_status === "accept"
+        ) {
+          order.payment.status = "paid";
+          order.orderStatus = "ordered";
+          await order.save();
+        }
+      } catch (midtransError) {
+        console.error("Error checking Midtrans status:", midtransError);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      order: {
+        _id: order._id,
+        payment: {
+          status: order.payment.status,
+          method: order.payment.method,
+        },
+        orderStatus: order.orderStatus,
+      },
+    });
+  } catch (error) {
+    console.error("Error checking order status:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -284,7 +427,6 @@ export const getMyPendingOrders = async (req, res) => {
     try {
       const orders = await Order.find({
         userId: id,
-        "payment.method": "cash",
         orderStatus: "pending",
       })
         .populate("kostId userId ownerId") // ini untuk ketika simpan object akan di populate
@@ -315,7 +457,6 @@ export const getPendingOrders = async (req, res) => {
     try {
       const orders = await Order.find({
         ownerId: id,
-        "payment.method": "cash",
         "payment.status": "pending",
       })
         .populate("kostId userId ownerId") // ini untuk ketika simpan object akan di populate

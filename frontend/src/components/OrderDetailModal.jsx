@@ -46,7 +46,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
 
   useEffect(() => {
     if (order?.payment?.cash?.proofOfPayment) {
-      setPaymentProofUrl(order.payment.cash.proofOfPayment);
+      setPaymentProofUrl(order?.payment?.cash?.proofOfPayment);
     }
   }, [order]);
 
@@ -92,7 +92,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
       return;
     }
 
-    if (paymentProofUrl === order.payment.cash.proofOfPayment) {
+    if (paymentProofUrl === order?.payment?.cash?.proofOfPayment) {
       Swal.fire({
         icon: "error",
         title: "Bukti Pembayran tidak berubah",
@@ -451,7 +451,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
                   <div className="text-xl font-semibold">
                     Rp {order.payment.amount.toLocaleString("id-ID")}
                   </div>
-                  {order.payment.cash.verifiedAt && (
+                  {order?.payment?.cash?.verifiedAt && (
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <MdVerified className="h-4 w-4" />
                       <span>
@@ -472,7 +472,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
               </div>
 
               {/* Existing Payment Proof Display */}
-              {order.payment.cash.proofOfPayment && (
+              {order?.payment?.cash?.proofOfPayment && (
                 <div className="mt-4 border-t pt-4">
                   <h4 className="mb-3 flex items-center gap-2 font-medium">
                     <FaCreditCard className="h-5 w-5 text-gray-400" />
@@ -489,7 +489,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
                       }}
                     />
                   </div>
-                  {order.payment.cash.uploadedAt && (
+                  {order?.payment?.cash?.uploadedAt && (
                     <div className="mt-2 text-sm text-gray-500">
                       Diunggah pada: {formatDate(order.payment.cash.uploadedAt)}
                     </div>
@@ -512,15 +512,16 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
                       accept="image/*"
                     />
 
-                    {!order.payment.cash.proofOfPayment && paymentProofUrl && (
-                      <div className="w-full overflow-hidden rounded-lg border">
-                        <img
-                          src={paymentProofUrl}
-                          alt="Preview bukti pembayaran"
-                          className="h-48 w-full object-cover"
-                        />
-                      </div>
-                    )}
+                    {!order?.payment?.cash?.proofOfPayment &&
+                      paymentProofUrl && (
+                        <div className="w-full overflow-hidden rounded-lg border">
+                          <img
+                            src={paymentProofUrl}
+                            alt="Preview bukti pembayaran"
+                            className="h-48 w-full object-cover"
+                          />
+                        </div>
+                      )}
 
                     <button
                       onClick={() => fileRef.current.click()}

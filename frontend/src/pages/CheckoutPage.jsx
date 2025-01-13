@@ -445,35 +445,6 @@ const CheckoutPage = () => {
     return response.json();
   };
 
-  const createOrderForMidtrans = async (kostId, paymentDetails) => {
-    const response = await fetch("/api/orders/midtrans", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        duration: durations[kostId],
-        paymentMethod: paymentDetails.paymentMethod,
-        tenant: tenantForm,
-        kostId: kostId,
-        ownerId: owners[kostId]?._id,
-        amount: kosts.find((k) => k._id === kostId).price * durations[kostId],
-        startDate: startDates[kostId],
-        endDate: endDates[kostId],
-        payment: {
-          status: paymentDetails.status,
-          ...paymentDetails,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
-  };
-
   // Menangani proses checkout
   const handleCheckout = async () => {
     if (!validateForm()) return;
@@ -481,60 +452,116 @@ const CheckoutPage = () => {
     try {
       if (paymentMethod === "midtrans") {
         for (const kost of kosts) {
-          const response = await fetch("/api/orders/midtrans", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              duration: durations[kost._id],
-              paymentMethod: "midtrans",
-              tenant: tenantForm,
-              kostId: [kost._id],
-              ownerId: owners[kost._id]?._id,
-              amount:
-                kosts.find((k) => k._id === kost._id).price *
-                durations[kost._id],
-              startDate: startDates[kost._id],
-              endDate: endDates[kost._id],
-              payment: {
-                status: "pending",
-                paymentMethod: "midtrans",
+          try {
+            const response = await fetch("/api/orders/midtrans", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
               },
-            }),
-          });
+              body: JSON.stringify({
+                duration: durations[kost._id],
+                paymentMethod: "midtrans",
+                tenant: tenantForm,
+                kostId: kost._id,
+                ownerId: owners[kost._id]?._id,
+                amount:
+                  kosts.find((k) => k._id === kost._id).price *
+                  durations[kost._id],
+                startDate: startDates[kost._id],
+                endDate: endDates[kost._id],
+                payment: {
+                  status: "pending",
+                  paymentMethod: "midtrans",
+                },
+              }),
+            });
 
-          const data = await response.json();
+            const data = await response.json();
 
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to initiate payment.");
+            if (!response.ok) {
+              throw new Error(data.message || "Failed to initiate payment.");
+            }
+
+            const { order, paymentToken } = data;
+
+            // Store orderId for status checking
+            const orderId = order._id;
+
+            window.snap.pay(paymentToken, {
+              onSuccess: async () => {
+                try {
+                  // Check payment status after successful payment
+                  const statusResponse = await fetch(
+                    `/api/orders/check-status/${orderId}`,
+                  );
+                  const statusData = await statusResponse.json();
+                  console.log("Status from API:", data);
+                  if (
+                    statusData.success &&
+                    statusData.order.payment.status === "paid"
+                  ) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "Pembayaran Berhasil",
+                      text: "Pesanan Anda telah dikonfirmasi",
+                      confirmButtonColor: "#2563eb",
+                    });
+                  } else {
+                    // If status is still pending, inform user to wait
+                    Swal.fire({
+                      icon: "info",
+                      title: "Memproses Pembayaran",
+                      text: "Pembayaran Anda sedang diproses. Silakan cek status pesanan secara berkala.",
+                      confirmButtonColor: "#2563eb",
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error verifying payment:", error);
+                  Swal.fire({
+                    icon: "warning",
+                    title: "Status Pembayaran",
+                    text: "Silakan cek status pesanan Anda di halaman pesanan",
+                    confirmButtonColor: "#2563eb",
+                  });
+                }
+                navigate("/my-orders");
+              },
+              onPending: () => {
+                Swal.fire({
+                  icon: "info",
+                  title: "Pembayaran Pending",
+                  text: "Silakan selesaikan pembayaran Anda",
+                  confirmButtonColor: "#2563eb",
+                });
+                navigate("/my-orders");
+              },
+              onError: () => {
+                Swal.fire({
+                  icon: "error",
+                  title: "Pembayaran Gagal",
+                  text: "Silakan coba lagi",
+                  confirmButtonColor: "#2563eb",
+                });
+                navigate("/my-orders");
+              },
+              onClose: () => {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Pembayaran Dibatalkan",
+                  text: "Popup pembayaran ditutup",
+                  confirmButtonColor: "#2563eb",
+                });
+              },
+            });
+          } catch (error) {
+            console.error("Payment error:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Terjadi Kesalahan",
+              text: error.message || "Mohon coba lagi nanti",
+              confirmButtonColor: "#2563eb",
+            });
           }
-
-          const { paymentToken } = data;
-
-          // Menampilkan popup Midtrans
-          window.snap.pay(paymentToken, {
-            onSuccess: () => {
-              Swal.fire(
-                "Success",
-                "Payment successful! Your order is confirmed.",
-                "success",
-              );
-            },
-            onPending: () => {
-              Swal.fire(
-                "Pending",
-                "Your payment is pending. Please complete it.",
-                "info",
-              );
-            },
-            onError: () => {
-              Swal.fire("Error", "Payment failed. Please try again.", "error");
-            },
-            onClose: () => {
-              Swal.fire("Cancelled", "Payment popup was closed.", "warning");
-            },
-          });
         }
       } else if (paymentMethod === "cash") {
         // Process cash payments for each kost

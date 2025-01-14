@@ -44,16 +44,9 @@ export const createMidtransOrder = async (req, res) => {
     });
 
     // Log setelah membuat order baru
-    console.log("=== CREATE ORDER LOGS ===");
-    console.log("New Order ID:", order._id);
-    console.log("Order Details:", order);
 
     // Generate Midtrans transaction
     const transaction = await createMidtransTransaction(order);
-
-    console.log("=== MIDTRANS TRANSACTION LOGS ===");
-    console.log("Midtrans Transaction:", transaction);
-    console.log("Order ID sent to Midtrans:", order._id);
 
     // Add Midtrans details to the order
     order.payment.midtrans = {
@@ -65,15 +58,9 @@ export const createMidtransOrder = async (req, res) => {
     await order.save();
 
     // Log setelah save
-    console.log("=== AFTER SAVE LOGS ===");
-    console.log("Saved Order ID:", order._id);
-    console.log("Saved Order:", order);
 
     // Verify order exists in database
     const verifyOrder = await Order.findById(order._id);
-    console.log("=== VERIFICATION LOGS ===");
-    console.log("Verified Order exists:", !!verifyOrder);
-    console.log("Verified Order ID:", verifyOrder?._id);
 
     console.log(transaction);
 
@@ -178,24 +165,15 @@ export const createCashOrder = async (req, res) => {
 // Handle Payment Notification (Midtrans)
 export const handlePaymentNotification = async (req, res) => {
   try {
-    console.log("=== PAYMENT NOTIFICATION LOGS ===");
-    console.log("Incoming Order ID:", req.body.order_id);
-    console.log("Raw notification body:", req.body);
-
     const midtransNotif = await midtransConfig.transaction.notification(
       req.body
     );
-    console.log("Processed notification:", midtransNotif);
 
     const orderId = midtransNotif.order_id;
-    console.log("Order ID to be updated:", orderId);
     const transactionStatus = midtransNotif.transaction_status;
     const fraudStatus = midtransNotif.fraud_status;
 
     const order = await Order.findById(orderId);
-    console.log("=== ORDER VERIFICATION ===");
-    console.log("Order exists in database:", !!order);
-    console.log("Found Order ID:", order?._id);
     if (!order) {
       console.log("Order not found:", orderId);
       return res.status(404).json({
@@ -230,7 +208,7 @@ export const handlePaymentNotification = async (req, res) => {
       updatedOrderStatus = "pending";
     }
 
-    console.log("Before update - Order:", order);
+    // console.log("Before update - Order:", order);
     // Update order with new status and payment details
     const updatedOrder = await Order.findOneAndUpdate(
       { _id: orderId },
@@ -254,13 +232,13 @@ export const handlePaymentNotification = async (req, res) => {
     );
 
     // Log hasil update
-    console.log("Updated order:", updatedOrder);
+    // console.log("Updated order:", updatedOrder);
 
     // Verifikasi update berhasil
     const verifiedOrder = await Order.findById(orderId);
-    console.log("Verified order:", verifiedOrder);
+    // console.log("Verified order:", verifiedOrder);
 
-    console.log("After update - Order:", updatedOrder);
+    // console.log("After update - Order:", updatedOrder);
 
     return res.status(200).json({
       success: true,

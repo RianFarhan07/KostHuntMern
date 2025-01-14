@@ -18,9 +18,6 @@ const coreMidtrans = new midtransClient.CoreApi({
 });
 
 export const createMidtransTransaction = async (order) => {
-  console.log("=== CREATING MIDTRANS TRANSACTION ===");
-  console.log("Order ID being used:", order._id);
-
   const parameter = {
     transaction_details: {
       order_id: order._id,
@@ -47,13 +44,8 @@ export const createMidtransTransaction = async (order) => {
   };
 
   try {
-    console.log("=== MIDTRANS PARAMETER ===");
-    console.log("Parameter sent to Midtrans:", parameter);
-
     const transaction = await midtransConfig.createTransaction(parameter);
     // Log response dari Midtrans
-    console.log("=== MIDTRANS RESPONSE ===");
-    console.log("Midtrans Transaction Response:", transaction);
     return transaction;
   } catch (error) {
     console.log(error.message);

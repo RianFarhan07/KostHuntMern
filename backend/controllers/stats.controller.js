@@ -5,6 +5,63 @@ import mongoose from "mongoose";
 export const getStatsForOwner = async (req, res) => {
   try {
     const ownerId = req.user.id;
+    const currentDate = new Date();
+    const lastMonth = new Date(
+      currentDate.setMonth(currentDate.getMonth() - 1)
+    );
+    // Basic Statistics with Growth Rates
+    const [currentStats, previousStats] = await Promise.all([
+      Order.aggregate([
+        {
+          $match: {
+            ownerId: new mongoose.Types.ObjectId(ownerId),
+            createdAt: { $gte: lastMonth },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalOrders: { $sum: 1 },
+            totalRevenue: { $sum: "$payment.amount" },
+          },
+        },
+      ]),
+      Order.aggregate([
+        {
+          $match: {
+            ownerId: new mongoose.Types.ObjectId(ownerId),
+            createdAt: {
+              $gte: new Date(lastMonth.setMonth(lastMonth.getMonth() - 1)),
+              $lt: lastMonth,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalOrders: { $sum: 1 },
+            totalRevenue: { $sum: "$payment.amount" },
+          },
+        },
+      ]),
+    ]);
+
+    // Calculate growth rates
+    const calculateGrowth = (current, previous) => {
+      if (!previous || previous === 0) return 0;
+      return ((current - previous) / previous) * 100;
+    };
+
+    const growthRates = {
+      orderGrowth: calculateGrowth(
+        currentStats[0]?.totalOrders || 0,
+        previousStats[0]?.totalOrders || 0
+      ),
+      revenueGrowth: calculateGrowth(
+        currentStats[0]?.totalRevenue || 0,
+        previousStats[0]?.totalRevenue || 0
+      ),
+    };
 
     // Basic Statistics
     const totalOrders = await Order.countDocuments({ ownerId });
@@ -60,7 +117,7 @@ export const getStatsForOwner = async (req, res) => {
           transferRevenue: {
             $sum: {
               $cond: [
-                { $eq: ["$payment.method", "transfer"] },
+                { $eq: ["$payment.method", "midtrans"] },
                 "$payment.amount",
                 0,
               ],
@@ -97,7 +154,7 @@ export const getStatsForOwner = async (req, res) => {
             $sum: { $cond: [{ $eq: ["$payment.method", "cash"] }, 1, 0] },
           },
           transferPayments: {
-            $sum: { $cond: [{ $eq: ["$payment.method", "transfer"] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ["$payment.method", "midtrans"] }, 1, 0] },
           },
           averageStayDuration: { $avg: "$duration" },
           totalStayDuration: { $sum: "$duration" },
@@ -206,12 +263,10 @@ export const getStatsForOwner = async (req, res) => {
     ]);
 
     // Occupancy Metrics
-    const currentDate = new Date();
     const occupancyMetrics = await Promise.all([
       // Currently occupied rooms
       Order.countDocuments({
         ownerId,
-        startDate: { $lte: currentDate },
         endDate: { $gte: currentDate },
         orderStatus: "ordered",
       }),
@@ -313,6 +368,45 @@ export const getStatsForOwner = async (req, res) => {
       { $sort: { count: -1 } },
     ]);
 
+    // Add new analytics
+    const tenantRetentionRate = await Order.aggregate([
+      {
+        $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
+      },
+      {
+        $group: {
+          _id: "$tenant.email",
+          bookingCount: { $sum: 1 },
+          firstBooking: { $min: "$startDate" },
+          lastBooking: { $max: "$startDate" },
+        },
+      },
+      {
+        $project: {
+          isReturning: {
+            $cond: [{ $gt: ["$bookingCount", 1] }, 1, 0],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalTenants: { $sum: 1 },
+          returningTenants: { $sum: "$isReturning" },
+        },
+      },
+      {
+        $project: {
+          retentionRate: {
+            $multiply: [
+              { $divide: ["$returningTenants", "$totalTenants"] },
+              100,
+            ],
+          },
+        },
+      },
+    ]);
+
     res.status(200).json({
       basicStats: {
         totalOrders,
@@ -341,6 +435,8 @@ export const getStatsForOwner = async (req, res) => {
         endingSoon: occupancyMetrics[2],
       },
       tenantDemographics,
+      growthMetrics: growthRates,
+      tenantRetention: tenantRetentionRate[0]?.retentionRate || 0,
     });
   } catch (error) {
     console.error("Error fetching owner dashboard data:", error);

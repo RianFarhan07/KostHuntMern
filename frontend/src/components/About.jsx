@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { FaHome } from "react-icons/fa";
 import { FiSearch, FiUsers } from "react-icons/fi";
 import { BsArrowRight } from "react-icons/bs";
+import { Link } from "react-router-dom";
 
 const About = () => {
   const features = [
@@ -101,14 +102,16 @@ const About = () => {
                 ))}
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="mt-8 flex items-center gap-2 rounded-full bg-yellow-500 px-6 py-3 text-white transition-colors hover:bg-yellow-600"
-              >
-                Pelajari Lebih Lanjut
-                <BsArrowRight className="h-5 w-5" />
-              </motion.button>
+              <Link to={"/features"}>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="mt-8 flex items-center gap-2 rounded-full bg-yellow-500 px-6 py-3 text-white transition-colors hover:bg-yellow-600"
+                >
+                  Pelajari Lebih Lanjut
+                  <BsArrowRight className="h-5 w-5" />
+                </motion.button>
+              </Link>
             </div>
           </motion.div>
         </div>

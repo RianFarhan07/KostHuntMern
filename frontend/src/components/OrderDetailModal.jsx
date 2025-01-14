@@ -269,6 +269,53 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
     });
   };
 
+  const handlePayNow = () => {
+    if (order?.payment?.midtrans?.paymentUrl) {
+      window.open(order.payment.midtrans.paymentUrl, "_blank");
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Payment URL tidak tersedia",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+  };
+
+  const checkPaymentStatus = async () => {
+    try {
+      // Check payment status after successful payment
+      const statusResponse = await fetch(
+        `/api/orders/check-status/${order._id}`,
+      );
+      const statusData = await statusResponse.json();
+      if (statusData.success && statusData.order.payment.status === "paid") {
+        Swal.fire({
+          icon: "success",
+          title: "Pembayaran Berhasil",
+          text: "Pesanan Anda telah dikonfirmasi",
+          confirmButtonColor: "#2563eb",
+        });
+      } else {
+        // If status is still pending, inform user to wait
+        Swal.fire({
+          icon: "info",
+          title: "Memproses Pembayaran",
+          text: "Pembayaran Anda sedang diproses. Silakan cek status pesanan secara berkala.",
+          confirmButtonColor: "#2563eb",
+        });
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      Swal.fire({
+        icon: "warning",
+        title: "Status Pembayaran",
+        text: "Silakan cek status pesanan Anda di halaman pesanan",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {
       case "paid":
@@ -445,19 +492,28 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <MdMoney className="h-5 w-5 text-gray-400" />
+                    {order.payment.method === "cash" ? (
+                      <MdMoney className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <FiCreditCard className="h-5 w-5 text-gray-400" />
+                    )}
+
                     <span className="capitalize">{order.payment.method}</span>
                   </div>
                   <div className="text-xl font-semibold">
                     Rp {order.payment.amount.toLocaleString("id-ID")}
                   </div>
-                  {order?.payment?.cash?.verifiedAt && (
+                  {order?.payment?.cash?.verifiedAt ? (
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <MdVerified className="h-4 w-4" />
                       <span>
                         {`
                         Terverifikasi pada: ${formatDate(order.payment.cash.verifiedAt)} oleh ${order.payment.cash.berifiedBy || order.ownerId.username}`}
                       </span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      Transaction ID: {order?.payment?.midtrans?.transactionId}
                     </div>
                   )}
                 </div>
@@ -499,55 +555,73 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
 
               {/* Payment Proof Upload Section */}
               {order.payment.status.toLowerCase() === "pending" && (
-                <div className="mt-4 space-y-3 rounded-lg border p-4">
-                  <h4 className="font-medium text-gray-900">
-                    Upload Bukti Pembayaran
-                  </h4>
-                  <div className="flex flex-col items-center space-y-3">
-                    <input
-                      type="file"
-                      ref={fileRef}
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      accept="image/*"
-                    />
+                <>
+                  {!owner && order.payment.method === "midtrans" ? (
+                    <div className="mt-4 space-y-3 rounded-lg border p-4">
+                      <h4 className="font-medium text-gray-900">
+                        Selesaikan Pembayaran
+                      </h4>
+                      <button
+                        onClick={handlePayNow}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                      >
+                        Bayar Sekarang
+                      </button>
+                      <p className="text-sm text-gray-500">
+                        Anda akan diarahkan ke halaman pembayaran Midtrans
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-3 rounded-lg border p-4">
+                      <h4 className="font-medium text-gray-900">
+                        Upload Bukti Pembayaran
+                      </h4>
+                      <div className="flex flex-col items-center space-y-3">
+                        <input
+                          type="file"
+                          ref={fileRef}
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          accept="image/*"
+                        />
 
-                    {!order?.payment?.cash?.proofOfPayment &&
-                      paymentProofUrl && (
-                        <div className="w-full overflow-hidden rounded-lg border">
-                          <img
-                            src={paymentProofUrl}
-                            alt="Preview bukti pembayaran"
-                            className="h-48 w-full object-cover"
-                          />
-                        </div>
-                      )}
+                        {!order?.payment?.cash?.proofOfPayment &&
+                          paymentProofUrl && (
+                            <div className="w-full overflow-hidden rounded-lg border">
+                              <img
+                                src={paymentProofUrl}
+                                alt="Preview bukti pembayaran"
+                                className="h-48 w-full object-cover"
+                              />
+                            </div>
+                          )}
 
-                    <button
-                      onClick={() => fileRef.current.click()}
-                      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                      disabled={isUploading}
-                    >
-                      <FaUpload className="h-5 w-5" />
-                      {isUploading
-                        ? `Mengunggah... ${filePerc}%`
-                        : "Unggah Bukti Pembayaran"}
-                    </button>
-                    {paymentProofUrl && (
-                      <div className="space-y-3">
-                        {!owner && (
-                          <button
-                            onClick={uploadPaymentProofToServer}
-                            className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                          >
-                            Kirim Bukti Pembayaran ke Server
-                          </button>
+                        <button
+                          onClick={() => fileRef.current.click()}
+                          className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          disabled={isUploading}
+                        >
+                          <FaUpload className="h-5 w-5" />
+                          {isUploading
+                            ? `Mengunggah... ${filePerc}%`
+                            : "Unggah Bukti Pembayaran"}
+                        </button>
+                        {paymentProofUrl && (
+                          <div className="space-y-3">
+                            {!owner && (
+                              <button
+                                onClick={uploadPaymentProofToServer}
+                                className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                              >
+                                Kirim Bukti Pembayaran ke Server
+                              </button>
+                            )}
+                          </div>
                         )}
-                        {/* Upload to Server Button - Only for tenants and shows after Firebase upload */}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

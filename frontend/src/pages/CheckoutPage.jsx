@@ -110,7 +110,6 @@ const CheckoutPage = () => {
             ownerPromises[kost._id] = fetch(`/api/user/${kost.userRef}`)
               .then((res) => res.json())
               .then((data) => {
-                console.log(`Owner data for kost ${kost._id}:`, data); // Add this log
                 return data;
               })
               .catch((error) => {
@@ -495,7 +494,6 @@ const CheckoutPage = () => {
                     `/api/orders/check-status/${orderId}`,
                   );
                   const statusData = await statusResponse.json();
-                  console.log("Status from API:", data);
                   if (
                     statusData.success &&
                     statusData.order.payment.status === "paid"

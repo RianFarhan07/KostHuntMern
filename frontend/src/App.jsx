@@ -16,6 +16,7 @@ import MyOrder from "./pages/MyOrder";
 import Tenant from "./pages/Tenant";
 import Favorite from "./pages/Favorite";
 import Stats from "./pages/Stats";
+import Features from "./pages/Features";
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
         <Route path="/search" element={<Search />} />
         <Route path="/checkout/:id" element={<CheckoutPage />} />
         <Route path="/favorit" element={<Favorite />} />
+        <Route path="/features" element={<Features />} />
 
         <Route element={<PrivateRoutes />}>
           <Route path="/my-kost" element={<MyKostList />} />

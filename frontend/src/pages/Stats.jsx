@@ -135,14 +135,57 @@ const Stats = () => {
   };
 
   // Chart configurations and data setup...
+  // const revenueChartData = {
+  //   labels: stats.monthlyStats.map((stat) =>
+  //     format(new Date(stat._id.year, stat._id.month - 1), "MMM yyyy"),
+  //   ),
+  //   datasets: [
+  //     {
+  //       label: "Monthly Revenue",
+  //       data: stats.monthlyStats.map((stat) => stat.revenue),
+  //       borderColor: "rgb(75, 192, 192)",
+  //       tension: 0.4,
+  //       fill: true,
+  //       backgroundColor: "rgba(75, 192, 192, 0.1)",
+  //     },
+  //   ],
+  // };
+
+  //dummy data
   const revenueChartData = {
-    labels: stats.monthlyStats.map((stat) =>
-      format(new Date(stat._id.year, stat._id.month - 1), "MMM yyyy"),
-    ),
+    labels: [
+      "Jan 2024",
+      "Feb 2024",
+      "Mar 2024",
+      "Apr 2024",
+      "May 2024",
+      "Jun 2024",
+      "Jul 2024",
+      "Aug 2024",
+      "Sep 2024",
+      "Oct 2024",
+      "Nov 2024",
+      "Dec 2024",
+      "Jan 2025",
+    ],
     datasets: [
       {
         label: "Monthly Revenue",
-        data: stats.monthlyStats.map((stat) => stat.revenue),
+        data: [
+          45000000, // Jan 2024
+          48000000, // Feb 2024
+          52000000, // Mar 2024
+          49500000, // Apr 2024
+          51000000, // May 2024
+          54000000, // Jun 2024
+          58000000, // Jul 2024
+          56000000, // Aug 2024
+          53000000, // Sep 2024
+          55000000, // Oct 2024
+          57000000, // Nov 2024
+          59000000, // Dec 2024
+          52600000, // Jan 2025 (matching your current data)
+        ],
         borderColor: "rgb(75, 192, 192)",
         tension: 0.4,
         fill: true,
@@ -460,10 +503,10 @@ const Stats = () => {
               transition={{ delay: index * 0.1 }}
               className="rounded-xl bg-white p-6 shadow-lg"
             >
-              <h2 className="mb-6 text-xl font-bold text-gray-800">
+              <h2 className="mb-6 flex justify-center text-xl font-bold text-gray-800">
                 {chart.title}
               </h2>
-              <div className="h-[300px]">
+              <div className="flex h-[300px] justify-center">
                 <Doughnut data={chart.data} options={chartOptions} />
               </div>
             </motion.div>

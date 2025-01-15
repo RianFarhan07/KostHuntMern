@@ -487,3 +487,47 @@ export const getOwnerOrders = async (req, res) => {
     });
   }
 };
+
+export const deleteExpiredOrders = async () => {
+  try {
+    const currentDate = new Date();
+
+    // Mencari dan menghapus order yang:
+    // 1. startDate sudah lewat dari tanggal sekarang
+    // 2. orderStatus masih pending
+    // 3. payment.status masih pending
+    const result = await Order.deleteMany({
+      startDate: { $lt: currentDate },
+      orderStatus: "pending",
+      "payment.status": "pending",
+    });
+
+    console.log(
+      `${
+        result.deletedCount
+      } expired orders have been deleted at ${new Date().toISOString()}`
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error deleting expired orders:", error);
+    throw error;
+  }
+};
+
+export const triggerExpiredOrdersCleanup = async (req, res) => {
+  try {
+    const result = await deleteExpiredOrders();
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} expired orders`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

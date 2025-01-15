@@ -182,11 +182,13 @@ const OrderCard = ({
                     <FiClock className="h-4 w-4" />
                     <span>{order.duration} bulan</span>
                   </div>
-                  <div
-                    className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${durationStatus.color}`}
-                  >
-                    {durationStatus.text}
-                  </div>
+                  {order.orderStatus === "ordered" && (
+                    <div
+                      className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${durationStatus.color}`}
+                    >
+                      {durationStatus.text}
+                    </div>
+                  )}
                 </motion.div>
               </div>
 

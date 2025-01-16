@@ -19,13 +19,11 @@ import {
   FiDollarSign,
   FiUsers,
   FiClock,
-  FiAlertCircle,
-  FiCheckCircle,
   FiRepeat,
   FiShoppingBag,
 } from "react-icons/fi";
-import { format } from "date-fns";
 import { useInView } from "react-intersection-observer";
+import { FaStar } from "react-icons/fa";
 
 ChartJS.register(
   CategoryScale,
@@ -62,6 +60,7 @@ const itemVariants = {
 
 const Stats = () => {
   const [stats, setStats] = useState(null);
+  const [isFacilitiesShowMore, setFacilitiesShowMore] = useState(false);
   const { ref, inView } = useInView({
     threshold: 0.1,
     triggerOnce: true,
@@ -134,23 +133,6 @@ const Stats = () => {
     }).format(value);
   };
 
-  // Chart configurations and data setup...
-  // const revenueChartData = {
-  //   labels: stats.monthlyStats.map((stat) =>
-  //     format(new Date(stat._id.year, stat._id.month - 1), "MMM yyyy"),
-  //   ),
-  //   datasets: [
-  //     {
-  //       label: "Monthly Revenue",
-  //       data: stats.monthlyStats.map((stat) => stat.revenue),
-  //       borderColor: "rgb(75, 192, 192)",
-  //       tension: 0.4,
-  //       fill: true,
-  //       backgroundColor: "rgba(75, 192, 192, 0.1)",
-  //     },
-  //   ],
-  // };
-
   //dummy data
   const revenueChartData = {
     labels: [
@@ -170,7 +152,7 @@ const Stats = () => {
     ],
     datasets: [
       {
-        label: "Monthly Revenue",
+        label: "Pendapatan Bulanan",
         data: [
           45000000, // Jan 2024
           48000000, // Feb 2024
@@ -203,52 +185,11 @@ const Stats = () => {
     },
   };
 
-  const paymentStatusData = {
-    labels: ["Belum Dibayar", "Sudah Dibayar"],
-    datasets: [
-      {
-        data: [stats.basicStats.pendingPayments, stats.basicStats.paidPayments],
-        backgroundColor: ["#FFA500", "#4CAF50"],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const occupancyData = {
-    labels: ["Terisi", "Segera Berakhir", "Tersedia"],
-    datasets: [
-      {
-        data: [
-          stats.occupancyMetrics.currentlyOccupied,
-          stats.occupancyMetrics.endingSoon,
-          stats.basicStats.totalKosts -
-            stats.occupancyMetrics.currentlyOccupied,
-        ],
-        backgroundColor: ["#4CAF50", "#FFA500", "#2196F3"],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const paymentMethodData = {
-    labels: ["Tunai", "Transfer"],
-    datasets: [
-      {
-        data: [
-          stats.basicStats.revenueStats.cashRevenue,
-          stats.basicStats.revenueStats.transferRevenue,
-        ],
-        backgroundColor: ["#9C27B0", "#3F51B5"],
-        borderWidth: 0,
-      },
-    ],
-  };
-
   const chartConfigs = [
     {
-      title: "Payment Status",
+      title: "Status Pembayaran",
       data: {
-        labels: ["Unpaid", "Paid"],
+        labels: ["Belum Dibayar", "Sudah Dibayar"],
         datasets: [
           {
             data: [
@@ -261,9 +202,9 @@ const Stats = () => {
       },
     },
     {
-      title: "Occupancy Status",
+      title: "Status Hunian",
       data: {
-        labels: ["Occupied", "Ending Soon", "Available"],
+        labels: ["Terisi", "Segera Berakhir", "Tersedia"],
         datasets: [
           {
             data: [
@@ -278,9 +219,9 @@ const Stats = () => {
       },
     },
     {
-      title: "Payment Methods",
+      title: "Metode Pembayaran",
       data: {
-        labels: ["Cash", "Transfer"],
+        labels: ["Tunai", "Transfer"],
         datasets: [
           {
             data: [
@@ -293,7 +234,7 @@ const Stats = () => {
       },
     },
     {
-      title: "Tenant Demographics",
+      title: "Demografi Penyewa",
       data: {
         labels: stats.tenantDemographics.map((demo) => demo._id),
         datasets: [
@@ -312,6 +253,80 @@ const Stats = () => {
     },
   ];
 
+  const facilitiesChartData = {
+    labels: stats.facilitiesStats
+      .sort((a, b) => b.count - a.count)
+      .map((facility) => facility._id),
+    datasets: [
+      {
+        label: "Jumlah Kost",
+        data: stats.facilitiesStats
+          .sort((a, b) => b.count - a.count)
+          .map((facility) => facility.count),
+        backgroundColor: "rgba(54, 162, 235, 0.6)",
+        borderColor: "rgba(54, 162, 235, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const facilitiesChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: true,
+        text: "Distribusi Fasilitas di Kost",
+        font: {
+          size: 16,
+          weight: "bold",
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
+  const StarRating = ({ rating }) => {
+    return (
+      <div className="flex items-center">
+        {[...Array(5)].map((_, index) => (
+          <FaStar
+            key={index}
+            className={`h-4 w-4 ${
+              index < rating
+                ? "fill-yellow-400 text-yellow-400"
+                : "fill-gray-200 text-gray-200"
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const getLatestReviews = () => {
+    const allReviews = stats.reviewStats
+      .flatMap((kost) =>
+        kost.ratings.map((rating) => ({
+          ...rating,
+          kostName: kost.kostName,
+        })),
+      )
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+
+    return allReviews;
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -323,9 +338,8 @@ const Stats = () => {
         variants={itemVariants}
         className="mb-8 text-4xl font-bold text-gray-800"
       >
-        Dashboard Analytics
+        Analisis Dashboard
       </motion.h1>
-
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           icon={FiHome}
@@ -336,51 +350,49 @@ const Stats = () => {
         />
         <StatCard
           icon={FiDollarSign}
-          title="Total Revenue"
+          title="Total Pendapatan"
           value={stats.basicStats.revenueStats.totalRevenue}
           trend={8.7}
           className="bg-gradient-to-br from-green-400 to-green-600 text-white"
         />
         <StatCard
           icon={FiUsers}
-          title="Active Tenants"
+          title="Penyewa Aktif"
           value={stats.occupancyMetrics.currentlyOccupied}
           trend={-2.1}
           className="bg-gradient-to-br from-purple-400 to-purple-600 text-white"
         />
         <StatCard
           icon={FiRepeat}
-          title="Retention Rate"
+          title="Tingkat Retensi"
           value={stats.tenantRetention}
           trend={-50}
           className="bg-gradient-to-br from-orange-400 to-orange-600 text-white"
         />
         <StatCard
           icon={FiShoppingBag}
-          title="Total Orders"
+          title="Total Order"
           value={stats.basicStats.totalOrders}
           trend={3.5}
           className="bg-gradient-to-br from-pink-400 to-pink-600 text-white"
         />
         <StatCard
           icon={FiClock}
-          title="Pending Payments"
+          title="Pembayaran Tertunda"
           value={stats.basicStats.pendingPayments}
           trend={-1.8}
           className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white"
         />
       </div>
-
       <motion.div
         variants={itemVariants}
         className="mt-8 rounded-xl bg-white p-6 shadow-lg"
       >
         <h2 className="mb-6 text-2xl font-bold text-gray-800">
-          Revenue Trends
+          Tren Pendapatan
         </h2>
         <Line data={revenueChartData} options={chartOptions} />
       </motion.div>
-
       {/* Revenue Overview */}
       <motion.div
         variants={itemVariants}
@@ -416,7 +428,6 @@ const Stats = () => {
           </div>
         </div>
       </motion.div>
-
       <motion.div
         ref={ref}
         variants={itemVariants}
@@ -426,7 +437,7 @@ const Stats = () => {
           <>
             <div className="rounded-xl bg-white p-6 shadow-lg">
               <h2 className="mb-6 text-2xl font-bold text-gray-800">
-                Popular Kosts
+                Kost Terpopular
               </h2>
               <div className="space-y-4">
                 {stats.popularKosts.map((kost, index) => (
@@ -446,7 +457,7 @@ const Stats = () => {
                         {formatCurrency(kost.totalRevenue)}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {kost.bookingCount} bookings
+                        {kost.bookingCount} pemesanan
                       </p>
                     </div>
                   </motion.div>
@@ -478,7 +489,7 @@ const Stats = () => {
                         {formatCurrency(tenant.totalSpent)}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {tenant.totalBookings} bookings
+                        {tenant.totalBookings} pemesanan
                       </p>
                     </div>
                   </motion.div>
@@ -487,6 +498,122 @@ const Stats = () => {
             </div>
           </>
         )}
+      </motion.div>
+
+      <motion.div
+        variants={itemVariants}
+        className="mt-8 rounded-xl bg-white p-6 shadow-lg"
+      >
+        <h2 className="mb-6 text-2xl font-bold text-gray-800">
+          Statistik Fasilitas
+        </h2>
+        <div className="h-[400px]">
+          <Bar data={facilitiesChartData} options={facilitiesChartOptions} />
+        </div>
+
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => setFacilitiesShowMore(!isFacilitiesShowMore)}
+            className="rounded-md bg-blue-500 px-4 py-2 text-white transition-all hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {isFacilitiesShowMore
+              ? "Tampilkan Lebih Sedikit"
+              : "Tampilkan Detail"}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {isFacilitiesShowMore && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-6 grid grid-cols-1 gap-4 overflow-hidden md:grid-cols-2 lg:grid-cols-3"
+            >
+              {stats.facilitiesStats
+                .sort((a, b) => b.count - a.count)
+                .map((facility, index) => (
+                  <motion.div
+                    key={facility._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="rounded-lg bg-gray-50 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-800">
+                        {facility._id}
+                      </h3>
+                      <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                        {facility.count} kost
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      <p>Available in:</p>
+                      <ul className="mt-1 list-inside list-disc">
+                        {facility.kosts.map((kost, idx) => (
+                          <li key={idx} className="truncate">
+                            {kost}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </motion.div>
+                ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      <motion.div
+        variants={itemVariants}
+        className="mt-8 rounded-xl bg-white p-6 shadow-lg"
+      >
+        <h2 className="mb-6 text-2xl font-bold text-gray-800">
+          Statistik Ulasan
+        </h2>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {stats.reviewStats.map((kost) => (
+            <motion.div
+              key={kost._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-lg bg-gray-50 p-4"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {kost.kostName}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <StarRating rating={kost.averageRating} />
+                  <span className="font-medium text-gray-700">
+                    {kost.averageRating.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+              <p className="mb-2 text-sm text-gray-600">
+                Total Ulasan: {kost.totalReviews}
+              </p>
+              <div className="mt-4 space-y-3">
+                {kost.ratings.slice(0, 1).map((review, index) => (
+                  <div
+                    key={index}
+                    className="rounded-md border border-gray-200 bg-white p-3"
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <StarRating rating={review.rating} />
+                      <span className="text-sm text-gray-500">
+                        {new Date(review.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </motion.div>
 
       <motion.div

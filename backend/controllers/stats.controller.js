@@ -309,7 +309,7 @@ export const getStatsForOwner = async (req, res) => {
 
     const reviewStats = await Kost.aggregate([
       {
-        $match: { userRef: new mongoose.Types.ObjectId(ownerId) },
+        $match: { userRef: ownerId },
       },
       {
         $unwind: "$reviews",
@@ -343,7 +343,7 @@ export const getStatsForOwner = async (req, res) => {
     // Facilities Analysis
     const facilitiesStats = await Kost.aggregate([
       {
-        $match: { userRef: new mongoose.Types.ObjectId(ownerId) },
+        $match: { userRef: ownerId },
       },
       {
         $unwind: "$facilities",
@@ -368,7 +368,6 @@ export const getStatsForOwner = async (req, res) => {
       { $sort: { count: -1 } },
     ]);
 
-    // Add new analytics
     const tenantRetentionRate = await Order.aggregate([
       {
         $match: { ownerId: new mongoose.Types.ObjectId(ownerId) },
@@ -435,6 +434,8 @@ export const getStatsForOwner = async (req, res) => {
         endingSoon: occupancyMetrics[2],
       },
       tenantDemographics,
+      facilitiesStats,
+      reviewStats,
       growthMetrics: growthRates,
       tenantRetention: tenantRetentionRate[0]?.retentionRate || 0,
     });

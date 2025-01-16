@@ -36,6 +36,7 @@ import {
 } from "react-icons/md";
 import Swal from "sweetalert2";
 import ktpPlaceholder from "../assets/default/ktpPlaceholder.png";
+import { motion, AnimatePresence } from "framer-motion";
 
 const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
   const [fileUploadError, setFileUploadError] = useState(false);
@@ -43,6 +44,45 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [paymentProofUrl, setPaymentProofUrl] = useState("");
   const fileRef = useRef(null);
+
+  // Animation variants
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      transition: {
+        duration: 0.2,
+      },
+    },
+  };
+
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (custom) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: custom * 0.1,
+        duration: 0.5,
+      },
+    }),
+  };
+
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 },
+  };
 
   useEffect(() => {
     if (order?.payment?.cash?.proofOfPayment) {
@@ -338,314 +378,366 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-auto rounded-xl bg-white p-6 shadow-lg">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100"
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50 p-4"
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={overlayVariants}
+      >
+        <motion.div
+          className="relative max-h-[90vh] w-full max-w-3xl overflow-auto rounded-xl bg-white p-6 shadow-lg"
+          variants={modalVariants}
         >
-          <FiX className="h-5 w-5" />
-        </button>
+          <motion.button
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <FiX className="h-5 w-5" />
+          </motion.button>
 
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Detail Pesanan</h2>
-          <div className="text-sm text-gray-500">ID: {order._id}</div>
-        </div>
+          <motion.div
+            className="mb-6 flex items-center justify-between"
+            variants={sectionVariants}
+            custom={0}
+          >
+            <h2 className="text-2xl font-bold text-gray-900">Detail Pesanan</h2>
+            <div className="text-sm text-gray-500">ID: {order._id}</div>
+          </motion.div>
 
-        <div className="space-y-6">
-          {/* Kost Information */}
-          <div className="rounded-lg bg-gray-50 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <FiHome className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold">{order.kostId.name}</h3>
-            </div>
-            <p className="mb-2 text-gray-600">{order.kostId.description}</p>
-            <p className="mb-2 text-gray-600">
-              {order.kostId.location}, {order.kostId.city}
-            </p>
-            <div className="mb-2 flex items-center gap-2">
-              <MdSecurity className="h-5 w-5 text-gray-400" />
-              <span className="font-medium">Tipe: {order.kostId.type}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MdMoney className="h-5 w-5 text-gray-400" />
-              <span className="font-medium">
-                Harga per Bulan: Rp {order.kostId.price.toLocaleString("id-ID")}
-              </span>
-            </div>
-            <div className="mt-3">
-              <h4 className="mb-2 font-medium">Fasilitas:</h4>
-              <div className="flex flex-wrap gap-2">
-                {order.kostId.facilities.map((facility, index) => (
-                  <span
-                    key={index}
-                    className="rounded-full bg-white px-3 py-1 text-sm text-gray-600"
-                  >
-                    {facility}
-                  </span>
-                ))}
+          <div className="space-y-6">
+            {/* Kost Information */}
+            <motion.div
+              className="space-y-4 rounded-lg border p-4"
+              variants={sectionVariants}
+              custom={2}
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <FiHome className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">{order.kostId.name}</h3>
               </div>
-            </div>
-          </div>
+              <p className="mb-2 text-gray-600">{order.kostId.description}</p>
+              <p className="mb-2 text-gray-600">
+                {order.kostId.location}, {order.kostId.city}
+              </p>
+              <div className="mb-2 flex items-center gap-2">
+                <MdSecurity className="h-5 w-5 text-gray-400" />
+                <span className="font-medium">Tipe: {order.kostId.type}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MdMoney className="h-5 w-5 text-gray-400" />
+                <span className="font-medium">
+                  Harga per Bulan: Rp{" "}
+                  {order.kostId.price.toLocaleString("id-ID")}
+                </span>
+              </div>
+              <div className="mt-3">
+                <h4 className="mb-2 font-medium">Fasilitas:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {order.kostId.facilities.map((facility, index) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-white px-3 py-1 text-sm text-gray-600"
+                    >
+                      {facility}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
 
-          {/* Tenant Information */}
-          <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-semibold text-gray-900">Informasi Penyewa</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <FiUser className="h-5 w-5 text-gray-400" />
-                <span>{order.tenant.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FiPhone className="h-5 w-5 text-gray-400" />
-                <span>{order.tenant.phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FiMail className="h-5 w-5 text-gray-400" />
-                <span>{order.tenant.email}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MdWork className="h-5 w-5 text-gray-400" />
-                <span>{order.tenant.occupation}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FaIdCard className="h-5 w-5 text-gray-400" />
-                <span>KTP: {order.tenant.identityNumber}</span>
-              </div>
-            </div>
-
-            {/* KTP Image */}
-            <div className="mt-4 border-t pt-4">
-              <h4 className="mb-3 flex items-center gap-2 font-medium">
-                <FaIdCard className="h-5 w-5 text-gray-400" />
-                Foto KTP
-              </h4>
-              <div className="overflow-hidden rounded-lg border bg-cover">
-                {order.tenant.identityImage ? (
-                  <img
-                    src={order.tenant.identityImage}
-                    alt="KTP"
-                    className="h-48 w-full object-cover"
-                    onError={(e) => {
-                      e.target.src = ktpPlaceholder;
-                      e.target.alt = "KTP image not available";
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-48 w-full items-center justify-center bg-gray-100 text-gray-400">
-                    Foto KTP tidak tersedia
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Emergency Contact */}
-            <div className="mt-4 border-t pt-4">
-              <h4 className="mb-3 font-medium">Kontak Darurat:</h4>
+            {/* Tenant Information */}
+            <motion.div
+              className="space-y-4 rounded-lg border p-4"
+              variants={sectionVariants}
+              custom={3}
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <h3 className="font-semibold text-gray-900">Informasi Penyewa</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex items-center gap-2">
-                  <MdContacts className="h-5 w-5 text-gray-400" />
-                  <span>{order.tenant.emergencyContact.name}</span>
+                  <FiUser className="h-5 w-5 text-gray-400" />
+                  <span>{order.tenant.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FiPhone className="h-5 w-5 text-gray-400" />
-                  <span>{order.tenant.emergencyContact.phone}</span>
+                  <span>{order.tenant.phone}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FiUser className="h-5 w-5 text-gray-400" />
-                  <span>
-                    Hubungan: {order.tenant.emergencyContact.relationship}
-                  </span>
+                  <FiMail className="h-5 w-5 text-gray-400" />
+                  <span>{order.tenant.email}</span>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Rental Details */}
-          <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-semibold text-gray-900">Detail Sewa</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <FiCalendar className="h-5 w-5 text-gray-400" />
-                <span>Mulai: {formatDate(order.startDate)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FaRegCalendarCheck className="h-5 w-5 text-gray-400" />
-                <span>Selesai: {formatDate(order.endDate)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FiClock className="h-5 w-5 text-gray-400" />
-                <span>Durasi: {order.duration} bulan</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FiFileText className="h-5 w-5 text-gray-400" />
-                <span>Status Order: {order.orderStatus}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment Information */}
-          <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-semibold text-gray-900">
-              Informasi Pembayaran
-            </h3>
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    {order.payment.method === "cash" ? (
-                      <MdMoney className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <FiCreditCard className="h-5 w-5 text-gray-400" />
-                    )}
-
-                    <span className="capitalize">{order.payment.method}</span>
-                  </div>
-                  <div className="text-xl font-semibold">
-                    Rp {order.payment.amount.toLocaleString("id-ID")}
-                  </div>
-                  {order?.payment?.cash?.verifiedAt ? (
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <MdVerified className="h-4 w-4" />
-                      <span>
-                        {`
-                        Terverifikasi pada: ${formatDate(order.payment.cash.verifiedAt)} oleh ${order.payment.cash.berifiedBy || order.ownerId.username}`}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      Transaction ID: {order?.payment?.midtrans?.transactionId}
-                    </div>
-                  )}
+                <div className="flex items-center gap-2">
+                  <MdWork className="h-5 w-5 text-gray-400" />
+                  <span>{order.tenant.occupation}</span>
                 </div>
-                <div
-                  className={`flex items-center gap-2 rounded-full border px-4 py-2 ${getStatusColor(
-                    order.payment.status,
-                  )}`}
-                >
-                  {getStatusIcon(order.payment.status)}
-                  <span className="capitalize">{order.payment.status}</span>
+                <div className="flex items-center gap-2">
+                  <FaIdCard className="h-5 w-5 text-gray-400" />
+                  <span>KTP: {order.tenant.identityNumber}</span>
                 </div>
               </div>
 
-              {/* Existing Payment Proof Display */}
-              {order?.payment?.cash?.proofOfPayment && (
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="mb-3 flex items-center gap-2 font-medium">
-                    <FaCreditCard className="h-5 w-5 text-gray-400" />
-                    Bukti Pembayaran
-                  </h4>
-                  <div className="overflow-hidden rounded-lg border">
+              {/* KTP Image */}
+              <div className="mt-4 border-t pt-4">
+                <h4 className="mb-3 flex items-center gap-2 font-medium">
+                  <FaIdCard className="h-5 w-5 text-gray-400" />
+                  Foto KTP
+                </h4>
+                <div className="overflow-hidden rounded-lg border bg-cover">
+                  {order.tenant.identityImage ? (
                     <img
-                      src={paymentProofUrl}
-                      alt="Bukti Pembayaran"
+                      src={order.tenant.identityImage}
+                      alt="KTP"
                       className="h-48 w-full object-cover"
                       onError={(e) => {
-                        e.target.src = "/api/placeholder/400/200";
-                        e.target.alt = "Payment proof not available";
+                        e.target.src = ktpPlaceholder;
+                        e.target.alt = "KTP image not available";
                       }}
                     />
-                  </div>
-                  {order?.payment?.cash?.uploadedAt && (
-                    <div className="mt-2 text-sm text-gray-500">
-                      Diunggah pada: {formatDate(order.payment.cash.uploadedAt)}
+                  ) : (
+                    <div className="flex h-48 w-full items-center justify-center bg-gray-100 text-gray-400">
+                      Foto KTP tidak tersedia
                     </div>
                   )}
                 </div>
-              )}
+              </div>
+              {/* Emergency Contact */}
+              <div className="mt-4 border-t pt-4">
+                <h4 className="mb-3 font-medium">Kontak Darurat:</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="flex items-center gap-2">
+                    <MdContacts className="h-5 w-5 text-gray-400" />
+                    <span>{order.tenant.emergencyContact.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiPhone className="h-5 w-5 text-gray-400" />
+                    <span>{order.tenant.emergencyContact.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiUser className="h-5 w-5 text-gray-400" />
+                    <span>
+                      Hubungan: {order.tenant.emergencyContact.relationship}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
-              {/* Payment Proof Upload Section */}
-              {order.payment.status.toLowerCase() === "pending" && (
-                <>
-                  {!owner && order.payment.method === "midtrans" ? (
-                    <div className="mt-4 space-y-3 rounded-lg border p-4">
-                      <h4 className="font-medium text-gray-900">
-                        Selesaikan Pembayaran
-                      </h4>
-                      <button
-                        onClick={handlePayNow}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                      >
-                        Bayar Sekarang
-                      </button>
-                      <p className="text-sm text-gray-500">
-                        Anda akan diarahkan ke halaman pembayaran Midtrans
-                      </p>
+            {/* Rental Details */}
+            <motion.div
+              className="space-y-4 rounded-lg border p-4"
+              variants={sectionVariants}
+              custom={3}
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <h3 className="font-semibold text-gray-900">Detail Sewa</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <FiCalendar className="h-5 w-5 text-gray-400" />
+                  <span>Mulai: {formatDate(order.startDate)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FaRegCalendarCheck className="h-5 w-5 text-gray-400" />
+                  <span>Selesai: {formatDate(order.endDate)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FiClock className="h-5 w-5 text-gray-400" />
+                  <span>Durasi: {order.duration} bulan</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FiFileText className="h-5 w-5 text-gray-400" />
+                  <span>Status Order: {order.orderStatus}</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Payment Information */}
+            <motion.div
+              className="space-y-4 rounded-lg border p-4"
+              variants={sectionVariants}
+              custom={4}
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <h3 className="font-semibold text-gray-900">
+                Informasi Pembayaran
+              </h3>
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {order.payment.method === "cash" ? (
+                        <MdMoney className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <FiCreditCard className="h-5 w-5 text-gray-400" />
+                      )}
+
+                      <span className="capitalize">{order.payment.method}</span>
                     </div>
-                  ) : (
-                    <div className="mt-4 space-y-3 rounded-lg border p-4">
-                      <h4 className="font-medium text-gray-900">
-                        Upload Bukti Pembayaran
-                      </h4>
-                      <div className="flex flex-col items-center space-y-3">
-                        <input
-                          type="file"
-                          ref={fileRef}
-                          onChange={handleFileSelect}
-                          className="hidden"
-                          accept="image/*"
-                        />
+                    <div className="text-xl font-semibold">
+                      Rp {order.payment.amount.toLocaleString("id-ID")}
+                    </div>
+                    {order?.payment?.cash?.verifiedAt ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <MdVerified className="h-4 w-4" />
+                        <span>
+                          {`
+                        Terverifikasi pada: ${formatDate(order.payment.cash.verifiedAt)} oleh ${order.payment.cash.berifiedBy || order.ownerId.username}`}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">
+                        Transaction ID:{" "}
+                        {order?.payment?.midtrans?.transactionId}
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className={`flex items-center gap-2 rounded-full border px-4 py-2 ${getStatusColor(
+                      order.payment.status,
+                    )}`}
+                  >
+                    {getStatusIcon(order.payment.status)}
+                    <span className="capitalize">{order.payment.status}</span>
+                  </div>
+                </div>
 
-                        {!order?.payment?.cash?.proofOfPayment &&
-                          paymentProofUrl && (
-                            <div className="w-full overflow-hidden rounded-lg border">
-                              <img
-                                src={paymentProofUrl}
-                                alt="Preview bukti pembayaran"
-                                className="h-48 w-full object-cover"
-                              />
+                {/* Existing Payment Proof Display */}
+                {order?.payment?.cash?.proofOfPayment && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="mb-3 flex items-center gap-2 font-medium">
+                      <FaCreditCard className="h-5 w-5 text-gray-400" />
+                      Bukti Pembayaran
+                    </h4>
+                    <div className="overflow-hidden rounded-lg border">
+                      <img
+                        src={paymentProofUrl}
+                        alt="Bukti Pembayaran"
+                        className="h-48 w-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "/api/placeholder/400/200";
+                          e.target.alt = "Payment proof not available";
+                        }}
+                      />
+                    </div>
+                    {order?.payment?.cash?.uploadedAt && (
+                      <div className="mt-2 text-sm text-gray-500">
+                        Diunggah pada:{" "}
+                        {formatDate(order.payment.cash.uploadedAt)}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Payment Proof Upload Section */}
+                {order.payment.status.toLowerCase() === "pending" && (
+                  <>
+                    {!owner && order.payment.method === "midtrans" ? (
+                      <div className="mt-4 space-y-3 rounded-lg border p-4">
+                        <h4 className="font-medium text-gray-900">
+                          Selesaikan Pembayaran
+                        </h4>
+                        <button
+                          onClick={handlePayNow}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        >
+                          Bayar Sekarang
+                        </button>
+                        <p className="text-sm text-gray-500">
+                          Anda akan diarahkan ke halaman pembayaran Midtrans
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-4 space-y-3 rounded-lg border p-4">
+                        <h4 className="font-medium text-gray-900">
+                          Upload Bukti Pembayaran
+                        </h4>
+                        <div className="flex flex-col items-center space-y-3">
+                          <input
+                            type="file"
+                            ref={fileRef}
+                            onChange={handleFileSelect}
+                            className="hidden"
+                            accept="image/*"
+                          />
+
+                          {!order?.payment?.cash?.proofOfPayment &&
+                            paymentProofUrl && (
+                              <div className="w-full overflow-hidden rounded-lg border">
+                                <img
+                                  src={paymentProofUrl}
+                                  alt="Preview bukti pembayaran"
+                                  className="h-48 w-full object-cover"
+                                />
+                              </div>
+                            )}
+
+                          <button
+                            onClick={() => fileRef.current.click()}
+                            className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                            disabled={isUploading}
+                          >
+                            <FaUpload className="h-5 w-5" />
+                            {isUploading
+                              ? `Mengunggah... ${filePerc}%`
+                              : "Unggah Bukti Pembayaran"}
+                          </button>
+                          {paymentProofUrl && (
+                            <div className="space-y-3">
+                              {!owner && (
+                                <button
+                                  onClick={uploadPaymentProofToServer}
+                                  className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                >
+                                  Kirim Bukti Pembayaran ke Server
+                                </button>
+                              )}
                             </div>
                           )}
-
-                        <button
-                          onClick={() => fileRef.current.click()}
-                          className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          disabled={isUploading}
-                        >
-                          <FaUpload className="h-5 w-5" />
-                          {isUploading
-                            ? `Mengunggah... ${filePerc}%`
-                            : "Unggah Bukti Pembayaran"}
-                        </button>
-                        {paymentProofUrl && (
-                          <div className="space-y-3">
-                            {!owner && (
-                              <button
-                                onClick={uploadPaymentProofToServer}
-                                className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                              >
-                                Kirim Bukti Pembayaran ke Server
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </motion.div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 border-t pt-4">
-            <button
-              onClick={onClose}
-              className="rounded-lg border px-4 py-2 text-gray-600 hover:bg-gray-50"
+            {/* Action Buttons */}
+            <motion.div
+              className="flex justify-end gap-3 border-t pt-4"
+              variants={sectionVariants}
+              custom={5}
             >
-              Tutup
-            </button>
-            {owner && order.payment.status.toLowerCase() === "pending" && (
-              <button
-                onClick={handleConfirmPayment}
-                className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+              <motion.button
+                onClick={onClose}
+                className="rounded-lg border px-4 py-2 text-gray-600 hover:bg-gray-50"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Konfirmasi Pembayaran
-              </button>
-            )}
+                Tutup
+              </motion.button>
+              {owner && order.payment.status.toLowerCase() === "pending" && (
+                <motion.button
+                  onClick={handleConfirmPayment}
+                  className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Konfirmasi Pembayaran
+                </motion.button>
+              )}
+            </motion.div>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

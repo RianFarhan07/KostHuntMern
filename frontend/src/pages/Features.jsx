@@ -12,8 +12,13 @@ import {
 } from "react-icons/fa";
 import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
+import { Link } from "react-router-dom";
 
 const Features = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [ref, inView] = useInView({
     threshold: 0.2,
     triggerOnce: true,
@@ -250,14 +255,16 @@ const Features = () => {
             <h2 className="mb-6 text-3xl font-bold text-white">
               Siap Memulai Pencarian Kost Impianmu?
             </h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-semibold text-yellow-500 shadow-md transition-all hover:shadow-xl"
-            >
-              Mulai Sekarang
-              <FaArrowAltCircleUp className="h-5 w-5" />
-            </motion.button>
+            <Link to={"/search"}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-semibold text-yellow-500 shadow-md transition-all hover:shadow-xl"
+              >
+                Mulai Sekarang
+                <FaArrowAltCircleUp className="h-5 w-5" />
+              </motion.button>
+            </Link>
           </div>
         </motion.div>
       </div>

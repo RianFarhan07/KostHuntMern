@@ -31,6 +31,7 @@ const KostDetail = () => {
   const [kost, setKost] = useState(null);
   const [owner, setOwner] = useState(null);
   const [reviewUsers, setReviewUsers] = useState({});
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -78,6 +79,10 @@ const KostDetail = () => {
     };
     fetchData();
   }, [id]);
+
+  const displayedReviews = showAllReviews
+    ? kost?.reviews
+    : kost?.reviews?.slice(0, 5);
 
   const handleAvailabilityToggle = async (checked) => {
     try {
@@ -381,7 +386,7 @@ const KostDetail = () => {
               </h2>
               {kost.reviews?.length > 0 ? (
                 <div className="space-y-4">
-                  {kost.reviews.map((review, index) => (
+                  {displayedReviews.map((review, index) => (
                     <div key={index} className="border-b pb-4 last:border-0">
                       <div className="mb-2 flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -410,6 +415,19 @@ const KostDetail = () => {
                       <p className="text-gray-600">{review.comment}</p>
                     </div>
                   ))}
+
+                  {kost.reviews.length > 5 && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setShowAllReviews(!showAllReviews)}
+                        className="rounded-lg bg-blue-500 px-6 py-2 text-white transition-colors hover:bg-blue-600"
+                      >
+                        {showAllReviews
+                          ? "Tampilkan Lebih Sedikit"
+                          : "Tampilkan Lebih Banyak"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-center text-gray-500">Belum ada ulasan</p>

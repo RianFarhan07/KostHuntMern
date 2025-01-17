@@ -24,6 +24,7 @@ import {
 } from "react-icons/fi";
 import { useInView } from "react-intersection-observer";
 import { FaStar } from "react-icons/fa";
+import { downloadCompleteExcel } from "../components/CreateExcelWordbook";
 
 ChartJS.register(
   CategoryScale,
@@ -65,6 +66,7 @@ const Stats = () => {
     threshold: 0.1,
     triggerOnce: true,
   });
+  console.log(stats);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -334,12 +336,21 @@ const Stats = () => {
       variants={containerVariants}
       className="min-h-screen bg-gray-50 p-6"
     >
-      <motion.h1
-        variants={itemVariants}
-        className="mb-8 text-4xl font-bold text-gray-800"
-      >
-        Analisis Dashboard
-      </motion.h1>
+      <div className="flex items-center justify-between space-x-4">
+        <motion.h1
+          variants={itemVariants}
+          className="mb-8 text-4xl font-bold text-gray-800"
+        >
+          Analisis Dashboard
+        </motion.h1>
+        <button
+          onClick={() => downloadCompleteExcel(stats)}
+          className="rounded-md bg-blue-500 px-4 py-2 text-white transition-all hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Download Complete Report
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           icon={FiHome}

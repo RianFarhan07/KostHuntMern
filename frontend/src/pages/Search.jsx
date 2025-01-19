@@ -82,6 +82,7 @@ const Search = () => {
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [showMap, setShowMap] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [kostsInRadius, setKostsInRadius] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -162,6 +163,30 @@ const Search = () => {
     fetchKosts(newParams);
   }, [location.search]);
 
+  useEffect(() => {
+    if (selectedLocation && searchParams.radius && kosts.length > 0) {
+      const filteredKosts = kosts.filter((kost) => {
+        // Check for coordinates array instead of separate lat/lng
+        if (!kost.coordinates || !Array.isArray(kost.coordinates)) return false;
+
+        const [longitude, latitude] = kost.coordinates; // Note: coordinates are [lng, lat]
+
+        const distance = calculateDistance(
+          selectedLocation[0], // latitude
+          selectedLocation[1], // longitude
+          latitude, // kost latitude
+          longitude, // kost longitude
+        );
+
+        return distance <= parseFloat(searchParams.radius);
+      });
+
+      setKostsInRadius(filteredKosts);
+    } else {
+      setKostsInRadius([]);
+    }
+  }, [selectedLocation, searchParams.radius, kosts]);
+
   const getRadiusInPixels = (radiusKm, lat, zoom) => {
     const earthCircumference = 40075; // km
     const latRadians = lat * (Math.PI / 180);
@@ -211,6 +236,20 @@ const Search = () => {
         setLocationLoading(false);
       },
     );
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in kilometers
   };
 
   const handleChange = (e) => {
@@ -396,6 +435,41 @@ const Search = () => {
                 <Marker width={50} anchor={selectedLocation} color="#FF0000" />
               )}
 
+              {/* Kost Markers */}
+              {kostsInRadius.map((kost) => {
+                // Check if kost has coordinates array
+                if (
+                  kost.coordinates &&
+                  Array.isArray(kost.coordinates) &&
+                  kost.coordinates.length === 2
+                ) {
+                  const [longitude, latitude] = kost.coordinates;
+                  return (
+                    <Marker
+                      key={kost._id}
+                      width={40}
+                      anchor={[latitude, longitude]} // Swap order to [lat, lng]
+                      color="#4CAF50"
+                    />
+                  );
+                }
+                // For backwards compatibility, check for separate latitude/longitude fields
+                else if (kost.latitude && kost.longitude) {
+                  return (
+                    <Marker
+                      key={kost._id}
+                      width={40}
+                      anchor={[
+                        parseFloat(kost.latitude),
+                        parseFloat(kost.longitude),
+                      ]}
+                      color="#4CAF50"
+                    />
+                  );
+                }
+                return null;
+              })}
+
               {/* Radius Circle */}
               {selectedLocation && searchParams.radius && (
                 <Overlay anchor={selectedLocation} offset={[0, 0]}>
@@ -416,14 +490,20 @@ const Search = () => {
           </div>
 
           {selectedLocation && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Latitude:</span>{" "}
-                {selectedLocation[0].toFixed(6)}
+            <div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Latitude:</span>{" "}
+                  {selectedLocation[0].toFixed(6)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Longitude:</span>{" "}
+                  {selectedLocation[1].toFixed(6)}
+                </div>
               </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Longitude:</span>{" "}
-                {selectedLocation[1].toFixed(6)}
+              <div className="mt-2 text-sm text-gray-600">
+                <span className="font-medium">Kost dalam radius:</span>{" "}
+                {kostsInRadius.length} tempat
               </div>
             </div>
           )}
@@ -431,6 +511,9 @@ const Search = () => {
       )}
     </div>
   );
+
+  console.log(kostsInRadius);
+  console.log(kosts);
 
   return (
     <div className="min-h-screen bg-gray-50">

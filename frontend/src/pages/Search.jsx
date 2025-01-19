@@ -67,7 +67,7 @@ const DEFAULT_ZOOM = 12;
 
 const Search = () => {
   const [searchParams, setSearchParams] = useState(DEFAULT_SEARCH_PARAMS);
-
+  const [hoveredMarkerId, setHoveredMarkerId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [kosts, setKosts] = useState([]);
@@ -416,7 +416,6 @@ const Search = () => {
               <span className="text-gray-600">km</span>
             </div>
           </div>
-
           <div className="h-[400px] w-full overflow-hidden rounded-lg border border-gray-200">
             <Map
               height={400}
@@ -435,40 +434,39 @@ const Search = () => {
                 <Marker width={50} anchor={selectedLocation} color="#FF0000" />
               )}
 
-              {/* Kost Markers */}
               {kostsInRadius.map((kost) => {
-                // Check if kost has coordinates array
-                if (
-                  kost.coordinates &&
-                  Array.isArray(kost.coordinates) &&
-                  kost.coordinates.length === 2
-                ) {
-                  const [longitude, latitude] = kost.coordinates;
-                  return (
-                    <Marker
-                      key={kost._id}
-                      width={40}
-                      anchor={[latitude, longitude]} // Swap order to [lat, lng]
-                      color="#4CAF50"
-                    />
-                  );
-                }
-                // For backwards compatibility, check for separate latitude/longitude fields
-                else if (kost.latitude && kost.longitude) {
-                  return (
-                    <Marker
-                      key={kost._id}
-                      width={40}
-                      anchor={[
-                        parseFloat(kost.latitude),
-                        parseFloat(kost.longitude),
-                      ]}
-                      color="#4CAF50"
-                    />
-                  );
-                }
-                return null;
+                const [longitude, latitude] = kost.coordinates;
+
+                return (
+                  <Marker
+                    key={kost._id}
+                    width={40}
+                    anchor={[latitude, longitude]}
+                    color="#4CAF50"
+                    onClick={() => {
+                      navigate(`/kost/${kost._id}`);
+                    }}
+                    onMouseOver={() => setHoveredMarkerId(kost._id)}
+                    onMouseOut={() => setHoveredMarkerId(null)}
+                  >
+                    {/* ini menbahkan hover nama kost tapi kost marker jadi hilang jika pakai overlay malah markernya di atas kiri map */}
+                    {/* {hoveredMarkerId === kost._id && (
+                      <div className="absolute rounded-lg bg-white px-3 py-2 shadow-lg">
+                        <p className="whitespace-nowrap text-sm font-medium text-gray-800">
+                          {kost.name}
+                        </p>
+                      </div>
+                    )} */}
+                  </Marker>
+                );
               })}
+              {hoveredMarkerId && (
+                <div className="absolute bottom-0 bg-white">
+                  <p className="text-sm font-medium text-gray-800">
+                    {kosts.find((kost) => kost._id === hoveredMarkerId).name}
+                  </p>
+                </div>
+              )}
 
               {/* Radius Circle */}
               {selectedLocation && searchParams.radius && (
@@ -482,6 +480,8 @@ const Search = () => {
                       borderRadius: "50%",
                       border: "2px solid #FF0000",
                       backgroundColor: "rgba(255, 0, 0, 0.1)",
+                      zIndex: 1, // Tambahkan z-index rendah untuk radius
+                      pointerEvents: "none", // Tambahkan ini agar radius tidak menghalangi klik
                     }}
                   />
                 </Overlay>
@@ -505,15 +505,30 @@ const Search = () => {
                 <span className="font-medium">Kost dalam radius:</span>{" "}
                 {kostsInRadius.length} tempat
               </div>
+              {/* <div>
+                {hoveredMarkerId && (
+                  <div className="absolute left-0 top-0 flex w-full justify-center p-2">
+                    <div className="rounded-lg bg-white px-3 py-2 shadow-lg">
+                      <p className="whitespace-nowrap text-sm font-medium text-gray-800">
+                        {
+                          kostsInRadius.find(
+                            (kost) => kost._id === hoveredMarkerId,
+                          ).name
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div> */}
             </div>
           )}
         </div>
       )}
     </div>
   );
-
-  console.log(kostsInRadius);
-  console.log(kosts);
+  console.log(hoveredMarkerId);
+  // console.log(kostsInRadius);
+  // console.log(kosts);
 
   return (
     <div className="min-h-screen bg-gray-50">

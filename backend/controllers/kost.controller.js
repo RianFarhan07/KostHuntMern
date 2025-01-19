@@ -49,6 +49,7 @@ export const updateKost = async (req, res) => {
       name,
       description,
       location,
+      coordinates,
       city,
       price,
       originalPrice,
@@ -74,6 +75,9 @@ export const updateKost = async (req, res) => {
     if (name !== undefined) kost.name = name;
     if (description !== undefined) kost.description = description;
     if (location !== undefined) kost.location = location;
+    if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
+      kost.coordinates = coordinates;
+    }
     if (city !== undefined) kost.city = city;
     if (price !== undefined) kost.price = price;
     if (originalPrice !== undefined) kost.originalPrice = originalPrice;
@@ -124,6 +128,25 @@ export const getAllKost = async (req, res) => {
     const limit = parseInt(req.query.limit) || 9; // Default to 9 items per page
     const skip = (page - 1) * limit;
 
+    const { latitude, longitude, radius } = req.query;
+
+    let geoFilter = {};
+    if (longitude && latitude && radius) {
+      // Convert radius from kilometers to radians (Earth's radius is approximately 6371 km)
+      const radiusInRadians = parseFloat(radius) / 6371;
+
+      geoFilter = {
+        coordinates: {
+          $geoWithin: {
+            $centerSphere: [
+              [parseFloat(longitude), parseFloat(latitude)],
+              radiusInRadians,
+            ],
+          },
+        },
+      };
+    }
+
     // Handle availability parameter
     let availability = req.query.availability;
     if (
@@ -159,6 +182,7 @@ export const getAllKost = async (req, res) => {
       ...(facilities && { facilities }),
       ...(location && { location: { $regex: location, $options: "i" } }),
       ...(city && { city: { $regex: city, $options: "i" } }),
+      ...geoFilter,
     };
 
     // Find kost data with pagination

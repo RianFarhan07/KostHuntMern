@@ -8,9 +8,12 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaTimes,
+  FaCrosshairs,
+  FaSearchLocation,
 } from "react-icons/fa";
 import KostCard from "../components/KostCard";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Map, ZoomControl, Marker, Overlay } from "pigeon-maps";
 
 const FACILITIES = [
   "WiFi",
@@ -52,7 +55,13 @@ const DEFAULT_SEARCH_PARAMS = {
   order: "desc",
   page: 1,
   limit: 9,
+  latitude: "",
+  longitude: "",
+  radius: "",
 };
+
+const DEFAULT_CENTER = [-6.2088, 106.8456]; // Jakarta coordinates
+const DEFAULT_ZOOM = 12;
 
 const Search = () => {
   const [searchParams, setSearchParams] = useState({
@@ -66,9 +75,13 @@ const Search = () => {
     order: "desc",
     page: 1,
     limit: 9,
+    latitude: "",
+    longitude: "",
+    radius: "",
   });
 
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [kosts, setKosts] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -76,6 +89,12 @@ const Search = () => {
     totalItems: 0,
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [showMap, setShowMap] = useState(false);
+  const [radiusCircle, setRadiusCircle] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -145,11 +164,65 @@ const Search = () => {
       order: urlParams.get("order") || "desc",
       page: parseInt(urlParams.get("page")) || 1,
       limit: parseInt(urlParams.get("limit")) || 9,
+      latitude: urlParams.get("latitude") || "",
+      longitude: urlParams.get("longitude") || "",
+      radius: urlParams.get("radius") || "",
     };
 
     setSearchParams(newParams);
     fetchKosts(newParams);
   }, [location.search]);
+
+  const getRadiusInPixels = (radiusKm, lat, zoom) => {
+    const earthCircumference = 40075; // km
+    const latRadians = lat * (Math.PI / 180);
+    const metersPerPixel =
+      (earthCircumference * 1000 * Math.cos(latRadians)) /
+      Math.pow(2, zoom + 8);
+    return (radiusKm * 1000) / metersPerPixel;
+  };
+
+  const handleMapClick = ({ latLng, pixel }) => {
+    const [lat, lng] = latLng;
+    setSelectedLocation(latLng);
+    setSearchParams((prev) => ({
+      ...prev,
+      latitude: lat.toString(),
+      longitude: lng.toString(),
+      radius: prev.radius || "5", // Set default radius to 5km if not set
+    }));
+  };
+
+  const getCurrentLocation = () => {
+    setLocationLoading(true);
+    setLocationError("");
+
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      setLocationLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setSelectedLocation([lat, lng]);
+        setMapCenter([lat, lng]);
+        setSearchParams((prev) => ({
+          ...prev,
+          latitude: lat.toString(),
+          longitude: lng.toString(),
+          radius: prev.radius || "5",
+        }));
+        setLocationLoading(false);
+      },
+      (error) => {
+        setLocationError("Unable to retrieve your location");
+        setLocationLoading(false);
+      },
+    );
+  };
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -259,9 +332,114 @@ const Search = () => {
       searchParams.location !== DEFAULT_SEARCH_PARAMS.location ||
       searchParams.city !== DEFAULT_SEARCH_PARAMS.city ||
       searchParams.sort !== DEFAULT_SEARCH_PARAMS.sort ||
-      searchParams.order !== DEFAULT_SEARCH_PARAMS.order
+      searchParams.order !== DEFAULT_SEARCH_PARAMS.order ||
+      searchParams.latitude !== DEFAULT_SEARCH_PARAMS.latitude ||
+      searchParams.longitude !== DEFAULT_SEARCH_PARAMS.longitude ||
+      searchParams.radius !== DEFAULT_SEARCH_PARAMS.radius
     );
   };
+
+  const MapSearchSection = () => (
+    <div className="mt-6 space-y-6 border-t border-gray-200 pt-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-gray-900">
+          Pencarian dengan Peta
+        </h3>
+        <button
+          type="button"
+          onClick={() => setShowMap(!showMap)}
+          className="flex items-center gap-2 text-primary hover:text-primary/80"
+        >
+          <FaSearchLocation />
+          <span>{showMap ? "Sembunyikan Peta" : "Tampilkan Peta"}</span>
+        </button>
+      </div>
+
+      {showMap && (
+        <div className="space-y-4">
+          <div className="mb-4 flex gap-4">
+            <button
+              type="button"
+              onClick={getCurrentLocation}
+              disabled={locationLoading}
+              className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-white transition-colors hover:bg-secondary/90"
+            >
+              {locationLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              ) : (
+                <FaCrosshairs />
+              )}
+              <span>Gunakan Lokasi Saat Ini</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                id="radius"
+                placeholder="Radius (km)"
+                className="w-32 rounded-lg border border-gray-200 p-2 outline-none focus:border-primary"
+                value={searchParams.radius}
+                onChange={handleChange}
+                min="0"
+                max="50"
+              />
+              <span className="text-gray-600">km</span>
+            </div>
+          </div>
+
+          <div className="h-[400px] w-full overflow-hidden rounded-lg border border-gray-200">
+            <Map
+              height={400}
+              center={mapCenter}
+              zoom={zoom}
+              onBoundsChanged={({ center, zoom }) => {
+                setMapCenter(center);
+                setZoom(zoom);
+              }}
+              onClick={handleMapClick}
+            >
+              <ZoomControl />
+
+              {/* Selected Location Marker */}
+              {selectedLocation && (
+                <Marker width={50} anchor={selectedLocation} color="#FF0000" />
+              )}
+
+              {/* Radius Circle */}
+              {selectedLocation && searchParams.radius && (
+                <Overlay anchor={selectedLocation} offset={[0, 0]}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      transform: "translate(-50%, -50%)",
+                      width: `${getRadiusInPixels(parseFloat(searchParams.radius), selectedLocation[0], zoom)}px`,
+                      height: `${getRadiusInPixels(parseFloat(searchParams.radius), selectedLocation[0], zoom)}px`,
+                      borderRadius: "50%",
+                      border: "2px solid #FF0000",
+                      backgroundColor: "rgba(255, 0, 0, 0.1)",
+                    }}
+                  />
+                </Overlay>
+              )}
+            </Map>
+          </div>
+
+          {selectedLocation && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Latitude:</span>{" "}
+                {selectedLocation[0].toFixed(6)}
+              </div>
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Longitude:</span>{" "}
+                {selectedLocation[1].toFixed(6)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -420,6 +598,7 @@ const Search = () => {
                   ))}
                 </div>
               </div>
+              <MapSearchSection />
             </div>
           )}
         </div>

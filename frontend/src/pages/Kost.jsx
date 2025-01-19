@@ -24,6 +24,7 @@ import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
 import { autoLogout } from "../redux/user/userSlice";
 import ModernToggleForKostPage from "../components/ModernToggleForKostPage";
+import { Map, Marker } from "pigeon-maps";
 
 const KostDetail = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -281,6 +282,25 @@ const KostDetail = () => {
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
+  const renderMap = () => {
+    if (!kost?.coordinates || kost.coordinates.length !== 2) {
+      return null;
+    }
+
+    const [longitude, latitude] = kost.coordinates;
+
+    return (
+      <div className="rounded-lg bg-white p-6 shadow-md">
+        <h2 className="mb-4 text-xl font-semibold">Lokasi</h2>
+        <div className="h-64 w-full overflow-hidden rounded-lg">
+          <Map defaultCenter={[latitude, longitude]} defaultZoom={15}>
+            <Marker width={50} color="#ff0000" anchor={[latitude, longitude]} />
+          </Map>
+        </div>
+      </div>
+    );
+  };
+
   if (loading)
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -378,6 +398,8 @@ const KostDetail = () => {
                 ))}
               </div>
             </div>
+
+            {renderMap()}
 
             <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">

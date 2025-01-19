@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
+import LocationPicker from "../components/LocationPicker.jsx";
 
 const UpdateKost = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const UpdateKost = () => {
     name: "",
     description: "",
     location: "",
+    coordinates: [106.8456, -6.2088],
     city: "",
     type: "",
     price: 0,
@@ -263,7 +265,7 @@ const UpdateKost = () => {
     >
       <div className="mx-auto max-w-4xl rounded-xl bg-white p-8 shadow-lg">
         <h1 className="mb-8 text-3xl font-bold text-gray-800">
-          Tambah Kost Baru
+          {`Edit Kost ${formData.name}`}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -312,6 +314,21 @@ const UpdateKost = () => {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Add Location Picker */}
+          <div className="col-span-2 space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Pilih Lokasi di Peta
+            </label>
+            <LocationPicker
+              onLocationSelect={(coordinates) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  coordinates: coordinates,
+                }));
+              }}
+            />
           </div>
 
           {/* Pricing */}

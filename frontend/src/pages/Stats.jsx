@@ -315,20 +315,6 @@ const Stats = () => {
     );
   };
 
-  const getLatestReviews = () => {
-    const allReviews = stats.reviewStats
-      .flatMap((kost) =>
-        kost.ratings.map((rating) => ({
-          ...rating,
-          kostName: kost.kostName,
-        })),
-      )
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5);
-
-    return allReviews;
-  };
-
   return (
     <motion.div
       initial="hidden"

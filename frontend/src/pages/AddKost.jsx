@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaCloudUploadAlt, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
+import LocationPicker from "../components/LocationPicker.jsx";
 
 const AddKost = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ const AddKost = () => {
     name: "",
     description: "",
     location: "",
+    coordinates: [106.8456, -6.2088],
     city: "",
     type: "",
     price: 0,
@@ -289,6 +291,21 @@ const AddKost = () => {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* After the location input field */}
+          <div className="col-span-2 space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Pilih Lokasi di Peta
+            </label>
+            <LocationPicker
+              onLocationSelect={(coordinates) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  coordinates: coordinates, // Already in [longitude, latitude] format from LocationPicker
+                }));
+              }}
+            />
           </div>
 
           {/* Pricing */}

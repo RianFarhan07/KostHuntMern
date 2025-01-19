@@ -14,6 +14,10 @@ const kostSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      index: "2dsphere",
+    },
     city: {
       type: String,
       require: true,
@@ -74,6 +78,8 @@ const kostSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+kostSchema.index({ coordinates: "2dsphere" });
 
 const Kost = mongoose.model("Kost", kostSchema);
 

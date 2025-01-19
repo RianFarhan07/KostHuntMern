@@ -148,12 +148,12 @@ export const getAllKost = async (req, res) => {
     }
 
     // Handle availability parameter
-    let availability = req.query.availability;
-    if (
-      availability === undefined ||
-      availability === false ||
-      availability === "false"
-    ) {
+    let availability;
+    if (req.query.availability === "false") {
+      availability = false;
+    } else if (req.query.availability === "true") {
+      availability = true;
+    } else {
       availability = { $in: [false, true] };
     }
 
@@ -161,6 +161,23 @@ export const getAllKost = async (req, res) => {
     let type = req.query.type;
     if (type === undefined || type === "all") {
       type = { $in: ["Putra", "Putri", "Campur"] };
+    }
+
+    //filter price
+    let priceFilter = {};
+    const minPrice = req.query.minPrice
+      ? parseInt(req.query.minPrice)
+      : undefined;
+    const maxPrice = req.query.maxPrice
+      ? parseInt(req.query.maxPrice)
+      : undefined;
+
+    if (minPrice !== undefined && maxPrice !== undefined) {
+      priceFilter = { price: { $gte: minPrice, $lte: maxPrice } };
+    } else if (minPrice !== undefined) {
+      priceFilter = { price: { $gte: minPrice } };
+    } else if (maxPrice !== undefined) {
+      priceFilter = { price: { $lte: maxPrice } };
     }
 
     const facilities = req.query.facilities
@@ -183,6 +200,7 @@ export const getAllKost = async (req, res) => {
       ...(location && { location: { $regex: location, $options: "i" } }),
       ...(city && { city: { $regex: city, $options: "i" } }),
       ...geoFilter,
+      ...priceFilter,
     };
 
     // Find kost data with pagination

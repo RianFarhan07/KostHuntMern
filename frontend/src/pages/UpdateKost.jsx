@@ -480,7 +480,7 @@ const UpdateKost = () => {
             type="submit"
             className="w-full rounded-lg bg-indigo-600 px-6 py-3 text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-400"
           >
-            Tambah Kost
+            Update Kost
           </button>
         </form>
       </div>

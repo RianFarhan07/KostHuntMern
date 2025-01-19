@@ -58,27 +58,15 @@ const DEFAULT_SEARCH_PARAMS = {
   latitude: "",
   longitude: "",
   radius: "",
+  minPrice: "",
+  maxPrice: "",
 };
 
 const DEFAULT_CENTER = [-6.2088, 106.8456]; // Jakarta coordinates
 const DEFAULT_ZOOM = 12;
 
 const Search = () => {
-  const [searchParams, setSearchParams] = useState({
-    searchTerm: "",
-    type: "all",
-    availability: undefined,
-    facilities: [],
-    location: "",
-    city: "",
-    sort: "createdAt",
-    order: "desc",
-    page: 1,
-    limit: 9,
-    latitude: "",
-    longitude: "",
-    radius: "",
-  });
+  const [searchParams, setSearchParams] = useState(DEFAULT_SEARCH_PARAMS);
 
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -93,7 +81,6 @@ const Search = () => {
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [showMap, setShowMap] = useState(false);
-  const [radiusCircle, setRadiusCircle] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const navigate = useNavigate();
@@ -167,6 +154,8 @@ const Search = () => {
       latitude: urlParams.get("latitude") || "",
       longitude: urlParams.get("longitude") || "",
       radius: urlParams.get("radius") || "",
+      minPrice: urlParams.get("minPrice") || "",
+      maxPrice: urlParams.get("maxPrice") || "",
     };
 
     setSearchParams(newParams);
@@ -335,7 +324,9 @@ const Search = () => {
       searchParams.order !== DEFAULT_SEARCH_PARAMS.order ||
       searchParams.latitude !== DEFAULT_SEARCH_PARAMS.latitude ||
       searchParams.longitude !== DEFAULT_SEARCH_PARAMS.longitude ||
-      searchParams.radius !== DEFAULT_SEARCH_PARAMS.radius
+      searchParams.radius !== DEFAULT_SEARCH_PARAMS.radius ||
+      searchParams.minPrice !== DEFAULT_SEARCH_PARAMS.minPrice ||
+      searchParams.maxPrice !== DEFAULT_SEARCH_PARAMS.maxPrice
     );
   };
 
@@ -520,6 +511,36 @@ const Search = () => {
                     className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
                     value={searchParams.location}
                     onChange={handleChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Harga Minimum
+                  </label>
+                  <input
+                    type="number"
+                    id="minPrice"
+                    placeholder="Harga minimum"
+                    className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
+                    value={searchParams.minPrice}
+                    onChange={handleChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Harga Maksimum
+                  </label>
+                  <input
+                    type="number"
+                    id="maxPrice"
+                    placeholder="Harga maksimum"
+                    className="w-full rounded-lg border border-gray-200 p-3 outline-none focus:border-primary"
+                    value={searchParams.maxPrice}
+                    onChange={handleChange}
+                    min="0"
                   />
                 </div>
 

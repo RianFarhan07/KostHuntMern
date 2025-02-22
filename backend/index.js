@@ -10,7 +10,10 @@ import statsRouter from "./routes/stats.route.js";
 import cron from "node-cron";
 import { deleteExpiredOrders } from "./controllers/order.controller.js";
 import cors from "cors";
+import path from "path";
 dotenv.config();
+
+const _dirname = path.resolve();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -34,6 +37,8 @@ app.use("/api/user", userRouter);
 app.use("/api/kost", kostRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/stats", statsRouter);
+
+app.use(express.static(path.join(_dirname, "/frontend/dist")));
 
 cron.schedule("0 0 * * *", async () => {
   try {
@@ -72,6 +77,10 @@ mongoose
 
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(_dirname, "frontend", "dist", "index.html"));
 });
 
 app.listen(port, () => {

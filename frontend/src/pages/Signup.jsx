@@ -208,7 +208,7 @@ const Signup = () => {
               type="submit"
               className="focus:shadow-outline w-full rounded bg-primary px-8 py-2 font-bold text-white hover:bg-primaryVariant focus:outline-none"
             >
-              Register
+              Sign up
             </button>
           </div>
         </form>

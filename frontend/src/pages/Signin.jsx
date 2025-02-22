@@ -69,7 +69,7 @@ const Signin = () => {
     <div className="flex h-[calc(100vh-120px)] items-center justify-center bg-gray-100 p-4">
       <div className="mx-auto mb-4 w-full max-w-sm rounded-lg bg-white px-8 pb-8 pt-6 shadow-md">
         <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
-          Create Your Account
+          Sign in to Your Account
         </h2>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
@@ -121,7 +121,7 @@ const Signin = () => {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 id="password"
-                placeholder="Create your password"
+                placeholder="Enter your password"
                 autoComplete="new-password"
                 className={`w-full appearance-none rounded border px-3 py-2 pr-10 leading-tight shadow focus:outline-none focus:ring-2 ${
                   errors.password ? "border-red-500" : "border-gray-300"
@@ -167,13 +167,13 @@ const Signin = () => {
 
         <Oauth />
         <p className="mt-6 text-center text-xs text-gray-500">
-          Don't have an account?{" "}
+          Don't have an account yet?{" "}
           <Link to={"/sign-up"} className="text-blue-500 hover:text-blue-800">
-            Register here
+            Sign up here
           </Link>
         </p>
         <p className="mt-4 text-center text-xs text-gray-500">
-          © {new Date().getFullYear()} Kost Hunt Rian. All rights reserved
+          © {new Date().getFullYear()} KostHunt by Rian. All rights reserved.
         </p>
       </div>
     </div>

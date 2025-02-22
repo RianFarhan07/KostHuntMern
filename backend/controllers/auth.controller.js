@@ -67,12 +67,10 @@ export const google = async (req, res, next) => {
 
     // Validasi input
     if (!email || !firebaseUid) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Email and Firebase UID are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email and Firebase UID are required",
+      });
     }
 
     // cek user apakah ada

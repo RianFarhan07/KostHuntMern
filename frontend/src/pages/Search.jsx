@@ -188,7 +188,7 @@ const Search = () => {
   }, [selectedLocation, searchParams.radius, kosts]);
 
   const getRadiusInPixels = (radiusKm, lat, zoom) => {
-    const earthCircumference = 40075; // km
+    const earthCircumference = 20000; // km
     const latRadians = lat * (Math.PI / 180);
     const metersPerPixel =
       (earthCircumference * 1000 * Math.cos(latRadians)) /

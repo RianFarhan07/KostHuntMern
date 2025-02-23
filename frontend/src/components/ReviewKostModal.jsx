@@ -1,5 +1,4 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Error } from "mongoose";
 import React, { useEffect, useState } from "react";
 import { FaPaperPlane, FaStar, FaTimes, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";

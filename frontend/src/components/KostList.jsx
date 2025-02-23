@@ -20,7 +20,9 @@ const KostList = () => {
     try {
       setLoading(true);
       setError(false);
-      const res = await fetch("/api/kost/getRandom");
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/kost/getRandom`,
+      );
       const data = await res.json();
 
       if (data.success === false) {

@@ -35,7 +35,7 @@ const MyKostList = () => {
       setLoading(true);
       setError(false);
       const res = await fetch(
-        `/api/user/kost/${currentUser._id}?page=${currentPage}&limit=${itemsPerPage}${
+        `${import.meta.env.VITE_API_URL}/api/user/kost/${currentUser._id}?page=${currentPage}&limit=${itemsPerPage}${
           searchTerm ? `&searchTerm=${searchTerm}` : ""
         }`,
       );

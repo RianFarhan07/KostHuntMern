@@ -24,6 +24,7 @@ app.use(
       "http://localhost:5173",
       "https://app.midtrans.com",
       "https://api.midtrans.com",
+      "kost-hunt-mern-aaj2tyijx-rianfarhan07s-projects.vercel.app",
     ], // URL frontend kamu
     methods: ["GET", "POST", "PUT", "DELETE"], // Metode HTTP yang diizinkan
     credentials: true, // Jika menggunakan cookies atau autentikasi
@@ -81,6 +82,10 @@ app.get("/", (req, res) => {
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(_dirname, "frontend", "dist", "index.html"));
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 app.listen(port, () => {

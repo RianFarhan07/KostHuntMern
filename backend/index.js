@@ -39,7 +39,7 @@ app.use("/api/kost", kostRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/stats", statsRouter);
 
-app.use(express.static(path.join(_dirname, "/frontend/dist")));
+// app.use(express.static(path.join(_dirname, "/frontend/dist")));
 
 cron.schedule("0 0 * * *", async () => {
   try {
@@ -76,17 +76,17 @@ mongoose
     console.log(err);
   });
 
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(_dirname, "frontend", "dist", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(_dirname, "frontend", "dist", "index.html"));
+// });
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);

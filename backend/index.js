@@ -25,6 +25,7 @@ app.use(
       "https://app.midtrans.com",
       "https://api.midtrans.com",
       "https://kost-hunt-mern-aaj2tyijx-rianfarhan07s-projects.vercel.app",
+      "https://kost-hunt-nojihybcw-rianfarhan07s-projects.vercel.app/",
     ], // URL frontend kamu
     methods: ["GET", "POST", "PUT", "DELETE"], // Metode HTTP yang diizinkan
     credentials: true, // Jika menggunakan cookies atau autentikasi

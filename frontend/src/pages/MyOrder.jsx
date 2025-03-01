@@ -75,6 +75,9 @@ const MyOrder = () => {
   const fetchMyOrders = async () => {
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/orders/my-orders/${currentUser._id}`,
+      {
+        credentials: "include",
+      },
     );
 
     // Tambahkan pengecekan 401 yang sama
@@ -101,6 +104,9 @@ const MyOrder = () => {
   const fetchPendingOrders = async () => {
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/orders/my-pending-orders/${currentUser._id}`,
+      {
+        credentials: "include",
+      },
     );
 
     if (response.status === 401) {

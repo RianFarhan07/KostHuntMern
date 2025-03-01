@@ -73,6 +73,9 @@ const Stats = () => {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/stats`,
+          {
+            credentials: "include",
+          },
         );
         const data = await response.json();
         setStats(data);

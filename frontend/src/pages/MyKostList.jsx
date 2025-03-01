@@ -38,6 +38,9 @@ const MyKostList = () => {
         `${import.meta.env.VITE_API_URL}/api/user/kost/${currentUser._id}?page=${currentPage}&limit=${itemsPerPage}${
           searchTerm ? `&searchTerm=${searchTerm}` : ""
         }`,
+        {
+          credentials: "include",
+        },
       );
 
       if (res.status === 401) {

@@ -73,6 +73,9 @@ const Tenant = () => {
   const fetchPaidOrders = async () => {
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/orders/tenant-paid-orders/${currentUser._id}`,
+      {
+        credentials: "include",
+      },
     );
 
     if (response.status === 401) {
@@ -97,6 +100,9 @@ const Tenant = () => {
   const fetchUnpaidOrders = async () => {
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/orders/tenant-unpaid-orders/${currentUser._id}`,
+      {
+        credentials: "include",
+      },
     );
 
     if (response.status === 401) {

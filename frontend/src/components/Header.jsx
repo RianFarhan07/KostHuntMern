@@ -8,7 +8,6 @@ import {
   signOutUserStart,
   signOutUserSuccess,
 } from "../redux/user/userSlice";
-import { BASE_URL } from "../utils/http";
 
 const Header = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);

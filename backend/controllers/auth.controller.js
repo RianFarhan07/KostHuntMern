@@ -84,7 +84,9 @@ export const google = async (req, res, next) => {
 
       res
         .cookie("access_token", token, {
-          httpOnly: true,
+          httpOnly: false,
+          sameSite: "none",
+          secure: true,
           expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         })
         .status(200)

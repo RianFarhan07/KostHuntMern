@@ -149,6 +149,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             proofOfPayment: paymentProofUrl,
           }),
@@ -263,6 +264,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             proofOfPayment: paymentProofUrl,
           }),

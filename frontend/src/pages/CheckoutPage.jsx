@@ -427,6 +427,7 @@ const CheckoutPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           duration: durations[kostId],
           paymentMethod: paymentDetails.paymentMethod,
@@ -466,6 +467,7 @@ const CheckoutPage = () => {
                 headers: {
                   "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify({
                   duration: durations[kost._id],
                   paymentMethod: "midtrans",

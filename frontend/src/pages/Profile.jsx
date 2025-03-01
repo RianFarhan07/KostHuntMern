@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaCamera, FaTrashAlt, FaSignOutAlt, FaEdit } from "react-icons/fa";
+import { FaTrashAlt, FaSignOutAlt, FaEdit } from "react-icons/fa";
 import { MdOutlineEmail } from "react-icons/md";
-import Cookies from "js-cookie";
 import { RiLockPasswordLine } from "react-icons/ri";
 import Swal from "sweetalert2";
 import {
@@ -28,7 +27,7 @@ import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const fileRef = useRef(null);
-  const { currentUser, loading, error } = useSelector((state) => state.user);
+  const { currentUser } = useSelector((state) => state.user);
   const [file, setFile] = useState(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [filePerc, setFilePerc] = useState(0);
@@ -39,7 +38,6 @@ const Profile = () => {
     avatar: currentUser?.avatar || "",
     password: "",
   });
-  const [updateSuccess, setUpdateSuccess] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -74,7 +72,9 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`/api/user/${currentUser._id}`);
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/user/${currentUser._id}`,
+        );
         const data = await response.json();
         if (data.success !== false) {
           dispatch(updateUserSuccess(data));
@@ -164,16 +164,6 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleUnauthorized = () => {
-    dispatch(autoLogout());
-    navigate("/sign-in");
-    Swal.fire({
-      icon: "error",
-      title: "Session Expired",
-      text: "Your session has expired. Please sign in again.",
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -227,14 +217,17 @@ const Profile = () => {
 
     try {
       dispatch(updateUserStart());
-      const res = await fetch(`/api/user/update/${currentUser._id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/user/update/${currentUser._id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+          credentials: "include",
         },
-        body: JSON.stringify(updateData),
-        credentials: "include",
-      });
+      );
 
       const data = await res.json();
 
@@ -293,12 +286,15 @@ const Profile = () => {
       if (result.isConfirmed) {
         try {
           dispatch(deleteUserStart());
-          const res = await fetch(`/api/user/delete/${currentUser._id}`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
+          const res = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/user/delete/${currentUser._id}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+              },
             },
-          });
+          );
           const data = await res.json();
 
           if (data.success === false) {
@@ -335,7 +331,9 @@ const Profile = () => {
   const handleSignOut = async () => {
     try {
       dispatch(signOutUserStart());
-      const res = await fetch("/api/auth/signout");
+      const res = await fetch(
+        "${import.meta.env.VITE_API_URL}/api/auth/signout",
+      );
       const data = await res.json();
       if (data.success === false) {
         dispatch(signOutUserFailure(data.message));

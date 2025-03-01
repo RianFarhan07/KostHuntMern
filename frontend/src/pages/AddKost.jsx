@@ -9,7 +9,7 @@ import {
 import { app } from "../firebase/firebase.config.js";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { FaCloudUploadAlt, FaTrash } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
 import LocationPicker from "../components/LocationPicker.jsx";
 
@@ -204,13 +204,16 @@ const AddKost = () => {
     }
 
     try {
-      const res = await fetch("/api/kost/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/kost/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
       const data = await res.json();
       if (!res.ok) {

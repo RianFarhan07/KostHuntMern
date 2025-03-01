@@ -15,14 +15,7 @@ import {
 import { MdMoney } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
 
-const OrderCard = ({
-  order,
-  onViewDetail,
-  onReview,
-  currentUser,
-  showLoginAlert,
-  owner,
-}) => {
+const OrderCard = ({ order, onViewDetail, onReview, currentUser, owner }) => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "paid":

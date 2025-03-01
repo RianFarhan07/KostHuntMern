@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import PropTypes from "prop-types";
 import { Map, Marker } from "pigeon-maps";
 
 const LocationPicker = ({ onLocationSelect }) => {
@@ -26,6 +27,9 @@ const LocationPicker = ({ onLocationSelect }) => {
       </Map>
     </div>
   );
+};
+LocationPicker.propTypes = {
+  onLocationSelect: PropTypes.func.isRequired,
 };
 
 export default LocationPicker;

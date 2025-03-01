@@ -43,7 +43,9 @@ const UpdateKost = () => {
   useEffect(() => {
     const fetchKost = async () => {
       const kostId = params.id;
-      const res = await fetch(`/api/kost/get/${kostId}`);
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/kost/get/${kostId}`,
+      );
       const data = await res.json();
       //   console.log(data);
 
@@ -227,13 +229,16 @@ const UpdateKost = () => {
         timestamp: new Date(),
       };
 
-      const res = await fetch(`/api/kost/update/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/kost/update/${params.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(submissionData),
         },
-        body: JSON.stringify(submissionData),
-      });
+      );
 
       const data = await res.json();
       if (!res.ok) {

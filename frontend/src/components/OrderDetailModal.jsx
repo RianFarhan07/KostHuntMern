@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FaCreditCard,
   FaIdCard,
@@ -39,7 +39,6 @@ import ktpPlaceholder from "../assets/default/ktpPlaceholder.png";
 import { motion, AnimatePresence } from "framer-motion";
 
 const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
-  const [fileUploadError, setFileUploadError] = useState(false);
   const [filePerc, setFilePerc] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [paymentProofUrl, setPaymentProofUrl] = useState("");
@@ -144,7 +143,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
 
     try {
       const response = await fetch(
-        `/api/orders/upload-payment-proof/${order._id}`,
+        `${import.meta.env.VITE_API_URL}/api/orders/upload-payment-proof/${order._id}`,
         {
           method: "PUT",
           headers: {
@@ -195,12 +194,14 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
         setFilePerc(Math.round(progress));
       },
       (error) => {
-        setFileUploadError(true);
         setIsUploading(false);
         Swal.fire({
           icon: "error",
           title: "Upload Gagal",
-          text: "Gagal mengunggah bukti pembayaran. Silakan coba lagi.",
+          text:
+            "Gagal mengunggah bukti pembayaran. Silakan coba lagi." +
+            "error" +
+            error,
           confirmButtonColor: "#2563eb",
         });
       },
@@ -256,7 +257,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
 
     try {
       const response = await fetch(
-        `/api/orders/verify-payment-status/${order._id}`,
+        `${import.meta.env.VITE_API_URL}/api/orders/verify-payment-status/${order._id}`,
         {
           method: "PUT",
           headers: {
@@ -322,39 +323,39 @@ const OrderDetailModal = ({ isOpen, onClose, order, owner }) => {
     }
   };
 
-  const checkPaymentStatus = async () => {
-    try {
-      // Check payment status after successful payment
-      const statusResponse = await fetch(
-        `/api/orders/check-status/${order._id}`,
-      );
-      const statusData = await statusResponse.json();
-      if (statusData.success && statusData.order.payment.status === "paid") {
-        Swal.fire({
-          icon: "success",
-          title: "Pembayaran Berhasil",
-          text: "Pesanan Anda telah dikonfirmasi",
-          confirmButtonColor: "#2563eb",
-        });
-      } else {
-        // If status is still pending, inform user to wait
-        Swal.fire({
-          icon: "info",
-          title: "Memproses Pembayaran",
-          text: "Pembayaran Anda sedang diproses. Silakan cek status pesanan secara berkala.",
-          confirmButtonColor: "#2563eb",
-        });
-      }
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-      Swal.fire({
-        icon: "warning",
-        title: "Status Pembayaran",
-        text: "Silakan cek status pesanan Anda di halaman pesanan",
-        confirmButtonColor: "#2563eb",
-      });
-    }
-  };
+  // const checkPaymentStatus = async () => {
+  //   try {
+  //     // Check payment status after successful payment
+  //     const statusResponse = await fetch(
+  //       `/api/orders/check-status/${order._id}`,
+  //     );
+  //     const statusData = await statusResponse.json();
+  //     if (statusData.success && statusData.order.payment.status === "paid") {
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Pembayaran Berhasil",
+  //         text: "Pesanan Anda telah dikonfirmasi",
+  //         confirmButtonColor: "#2563eb",
+  //       });
+  //     } else {
+  //       // If status is still pending, inform user to wait
+  //       Swal.fire({
+  //         icon: "info",
+  //         title: "Memproses Pembayaran",
+  //         text: "Pembayaran Anda sedang diproses. Silakan cek status pesanan secara berkala.",
+  //         confirmButtonColor: "#2563eb",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error verifying payment:", error);
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Status Pembayaran",
+  //       text: "Silakan cek status pesanan Anda di halaman pesanan",
+  //       confirmButtonColor: "#2563eb",
+  //     });
+  //   }
+  // };
 
   const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {

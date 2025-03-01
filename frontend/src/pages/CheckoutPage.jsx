@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BsCreditCard2Front,
   BsCash,
@@ -81,7 +81,9 @@ const CheckoutPage = () => {
         // Mengambil ID kost dari parameter URL
         const kostIds = params.id.split(",");
         const kostPromises = kostIds.map((id) =>
-          fetch(`/api/kost/get/${id}`).then((res) => res.json()),
+          fetch(`${import.meta.env.VITE_API_URL}/api/kost/get/${id}`).then(
+            (res) => res.json(),
+          ),
         );
 
         const kostsData = await Promise.all(kostPromises);
@@ -107,7 +109,9 @@ const CheckoutPage = () => {
 
           // Siapkan promise untuk mengambil data pemilik
           if (kost.userRef) {
-            ownerPromises[kost._id] = fetch(`/api/user/${kost.userRef}`)
+            ownerPromises[kost._id] = fetch(
+              `${import.meta.env.VITE_API_URL}/api/user/${kost.userRef}`,
+            )
               .then((res) => res.json())
               .then((data) => {
                 return data;
@@ -416,26 +420,29 @@ const CheckoutPage = () => {
 
   // Membuat order di database
   const createOrder = async (kostId, paymentDetails) => {
-    const response = await fetch("/api/orders/cash", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        duration: durations[kostId],
-        paymentMethod: paymentDetails.paymentMethod,
-        tenant: tenantForm,
-        kostId: kostId,
-        ownerId: owners[kostId]?._id,
-        amount: kosts.find((k) => k._id === kostId).price * durations[kostId],
-        startDate: startDates[kostId],
-        endDate: endDates[kostId],
-        payment: {
-          status: paymentDetails.status,
-          ...paymentDetails,
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/orders/cash`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          duration: durations[kostId],
+          paymentMethod: paymentDetails.paymentMethod,
+          tenant: tenantForm,
+          kostId: kostId,
+          ownerId: owners[kostId]?._id,
+          amount: kosts.find((k) => k._id === kostId).price * durations[kostId],
+          startDate: startDates[kostId],
+          endDate: endDates[kostId],
+          payment: {
+            status: paymentDetails.status,
+            ...paymentDetails,
+          },
+        }),
+      },
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -452,28 +459,31 @@ const CheckoutPage = () => {
       if (paymentMethod === "midtrans") {
         for (const kost of kosts) {
           try {
-            const response = await fetch("/api/orders/midtrans", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                duration: durations[kost._id],
-                paymentMethod: "midtrans",
-                tenant: tenantForm,
-                kostId: kost._id,
-                ownerId: owners[kost._id]?._id,
-                amount:
-                  kosts.find((k) => k._id === kost._id).price *
-                  durations[kost._id],
-                startDate: startDates[kost._id],
-                endDate: endDates[kost._id],
-                payment: {
-                  status: "pending",
-                  paymentMethod: "midtrans",
+            const response = await fetch(
+              `${import.meta.env.VITE_API_URL}/api/orders/midtrans`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
                 },
-              }),
-            });
+                body: JSON.stringify({
+                  duration: durations[kost._id],
+                  paymentMethod: "midtrans",
+                  tenant: tenantForm,
+                  kostId: kost._id,
+                  ownerId: owners[kost._id]?._id,
+                  amount:
+                    kosts.find((k) => k._id === kost._id).price *
+                    durations[kost._id],
+                  startDate: startDates[kost._id],
+                  endDate: endDates[kost._id],
+                  payment: {
+                    status: "pending",
+                    paymentMethod: "midtrans",
+                  },
+                }),
+              },
+            );
 
             const data = await response.json();
 
@@ -491,7 +501,7 @@ const CheckoutPage = () => {
                 try {
                   // Check payment status after successful payment
                   const statusResponse = await fetch(
-                    `/api/orders/check-status/${orderId}`,
+                    `${import.meta.env.VITE_API_URL}/api/orders/check-status/${orderId}`,
                   );
                   const statusData = await statusResponse.json();
                   if (

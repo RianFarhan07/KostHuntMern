@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "../styles/section.css";
 import { FaMapPin, FaPaperPlane } from "react-icons/fa";
@@ -40,6 +40,7 @@ const ContactUs = () => {
         throw new Error("Gagal mengirim pesan.");
       }
     } catch (error) {
+      console.log(error);
       setStatus("error");
     } finally {
       setIsLoading(false);
@@ -74,7 +75,6 @@ const ContactUs = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Keeping original CSS header */}
         <div className="contact-header">
           <h2>
             Hubungi <span>Kami</span>

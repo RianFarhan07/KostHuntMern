@@ -8,6 +8,7 @@ import {
   signOutUserStart,
   signOutUserSuccess,
 } from "../redux/user/userSlice";
+import { BASE_URL } from "../utils/http";
 
 const Header = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -75,7 +76,9 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       dispatch(signOutUserStart());
-      const res = await fetch("/api/auth/signout");
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/signout`,
+      );
       const data = res.json();
       if (data === false) {
         dispatch(signOutUserFailure(data.message));

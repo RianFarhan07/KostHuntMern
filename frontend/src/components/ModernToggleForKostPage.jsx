@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaCheck, FaTimes } from "react-icons/fa";
+import PropTypes from "prop-types";
 
 const ModernToggleForKostPage = ({
   checked: externalChecked,
@@ -73,6 +74,13 @@ const ModernToggleForKostPage = ({
       )}
     </div>
   );
+};
+ModernToggleForKostPage.propTypes = {
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func,
+  size: PropTypes.oneOf(["small", "default", "large"]),
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default ModernToggleForKostPage;

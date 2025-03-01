@@ -25,18 +25,6 @@ const LoadingState = () => (
   </div>
 );
 
-const ErrorState = ({ message }) => (
-  <div className="rounded-lg bg-red-50 p-4 text-center text-red-700">
-    <p>{message}</p>
-    <button
-      onClick={() => window.location.reload()}
-      className="mt-2 text-sm font-medium text-red-600 hover:text-red-500"
-    >
-      Coba lagi
-    </button>
-  </div>
-);
-
 const Tenant = () => {
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -84,7 +72,7 @@ const Tenant = () => {
 
   const fetchPaidOrders = async () => {
     const response = await fetch(
-      `/api/orders/tenant-paid-orders/${currentUser._id}`,
+      `${import.meta.env.VITE_API_URL}/api/orders/tenant-paid-orders/${currentUser._id}`,
     );
 
     if (response.status === 401) {
@@ -108,7 +96,7 @@ const Tenant = () => {
 
   const fetchUnpaidOrders = async () => {
     const response = await fetch(
-      `/api/orders/tenant-unpaid-orders/${currentUser._id}`,
+      `${import.meta.env.VITE_API_URL}/api/orders/tenant-unpaid-orders/${currentUser._id}`,
     );
 
     if (response.status === 401) {
@@ -136,7 +124,18 @@ const Tenant = () => {
   };
 
   if (isLoading) return <LoadingState />;
-  if (error) return <ErrorState message={error} />;
+  if (error)
+    return (
+      <div className="rounded-lg bg-red-50 p-4 text-center text-red-700">
+        <p>{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 text-sm font-medium text-red-600 hover:text-red-500"
+        >
+          Coba lagi
+        </button>
+      </div>
+    );
 
   const currentOrders = activeTab === "paid" ? paidOrders : unpaidOrders;
 

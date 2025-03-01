@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import ReactSwitch from "react-switch";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -75,6 +76,13 @@ const AnimatedSwitch = ({
       )}
     </div>
   );
+};
+AnimatedSwitch.propTypes = {
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func,
+  size: PropTypes.oneOf(["small", "default", "large"]),
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default AnimatedSwitch;

@@ -1,24 +1,13 @@
-import React, { useState, useEffect } from "react";
-import {
-  FiClock,
-  FiCalendar,
-  FiUser,
-  FiHome,
-  FiCircle,
-  FiCreditCard,
-  FiCheckCircle,
-  FiXCircle,
-  FiAlertCircle,
-  FiLoader,
-} from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { FiLoader } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import OrderCard from "../components/OrderCard";
 import OrderDetailModal from "../components/OrderDetailModal";
 import Swal from "sweetalert2";
 import { autoLogout } from "../redux/user/userSlice";
 import ReviewKostModal from "../components/ReviewKostModal";
+import PropTypes from "prop-types";
 
-// Components remain the same
 const Tab = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
@@ -30,24 +19,6 @@ const Tab = ({ active, onClick, children }) => (
   >
     {children}
   </button>
-);
-
-const LoadingState = () => (
-  <div className="flex items-center justify-center py-8">
-    <FiLoader className="h-8 w-8 animate-spin text-primary" />
-  </div>
-);
-
-const ErrorState = ({ message }) => (
-  <div className="rounded-lg bg-red-50 p-4 text-center text-red-700">
-    <p>{message}</p>
-    <button
-      onClick={() => window.location.reload()}
-      className="mt-2 text-sm font-medium text-red-600 hover:text-red-500"
-    >
-      Coba lagi
-    </button>
-  </div>
 );
 
 const MyOrder = () => {
@@ -102,7 +73,9 @@ const MyOrder = () => {
   // Tambahkan dispatch ke dependencies
 
   const fetchMyOrders = async () => {
-    const response = await fetch(`/api/orders/my-orders/${currentUser._id}`);
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/orders/my-orders/${currentUser._id}`,
+    );
 
     // Tambahkan pengecekan 401 yang sama
     if (response.status === 401) {
@@ -127,7 +100,7 @@ const MyOrder = () => {
 
   const fetchPendingOrders = async () => {
     const response = await fetch(
-      `/api/orders/my-pending-orders/${currentUser._id}`,
+      `${import.meta.env.VITE_API_URL}/api/orders/my-pending-orders/${currentUser._id}`,
     );
 
     if (response.status === 401) {
@@ -181,8 +154,24 @@ const MyOrder = () => {
     setSelectedKostId(null);
   };
 
-  if (isLoading) return <LoadingState />;
-  if (error) return <ErrorState message={error} />;
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center py-8">
+        <FiLoader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  if (error)
+    return (
+      <div className="rounded-lg bg-red-50 p-4 text-center text-red-700">
+        <p>{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 text-sm font-medium text-red-600 hover:text-red-500"
+        >
+          Coba lagi
+        </button>
+      </div>
+    );
 
   const currentOrders = activeTab === "ordered" ? orderedOrders : pendingOrders;
   console.log(currentOrders);
@@ -249,4 +238,10 @@ const MyOrder = () => {
     </div>
   );
 };
+Tab.propTypes = {
+  active: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
 export default MyOrder;

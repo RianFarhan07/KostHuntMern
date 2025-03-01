@@ -1,5 +1,4 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import React from "react";
 import { FaGoogle } from "react-icons/fa";
 import { auth } from "../firebase/firebase.config";
 import { useDispatch } from "react-redux";
@@ -19,19 +18,22 @@ const Oauth = () => {
       const result = await signInWithPopup(auth, provider);
       const firebaseUid = result.user.uid;
 
-      const response = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/google`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            name: result.user.displayName,
+            email: result.user.email,
+            photo: result.user.photoURL,
+            loginSource: "firebase",
+            firebaseUid: firebaseUid,
+          }),
         },
-        body: JSON.stringify({
-          name: result.user.displayName,
-          email: result.user.email,
-          photo: result.user.photoURL,
-          loginSource: "firebase",
-          firebaseUid: firebaseUid,
-        }),
-      });
+      );
 
       const data = await response.json();
       dispatch(signInSuccess(data));

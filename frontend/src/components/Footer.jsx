@@ -1,4 +1,3 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { FaFacebook, FaGithub, FaInstagram, FaLinkedin } from "react-icons/fa";
 import { MdOutlineWorkOutline } from "react-icons/md";
@@ -97,7 +96,7 @@ const Footer = () => {
         <motion.div className="footer-section" variants={itemVariants}>
           <motion.h3 variants={itemVariants}>Link Cepat</motion.h3>
           <motion.ul variants={itemVariants}>
-            {["home", "about", "kost", "contact"].map((item, index) => (
+            {["home", "about", "kost", "contact"].map((item) => (
               <motion.li
                 key={item}
                 variants={itemVariants}

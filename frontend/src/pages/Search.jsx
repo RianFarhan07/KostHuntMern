@@ -108,7 +108,7 @@ const Search = () => {
       });
 
       const response = await fetch(
-        `/api/kost/getAll?${queryParams.toString()}`,
+        `${import.meta.env.VITE_API_URL}/api/kost/getAll?${queryParams.toString()}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch kosts");
@@ -232,7 +232,7 @@ const Search = () => {
         setLocationLoading(false);
       },
       (error) => {
-        setLocationError("Unable to retrieve your location");
+        setLocationError("Unable to retrieve your location" + error);
         setLocationLoading(false);
       },
     );

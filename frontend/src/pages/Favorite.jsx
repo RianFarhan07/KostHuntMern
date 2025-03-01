@@ -28,7 +28,9 @@ const Favorite = () => {
       try {
         setLoading(true);
         const promises = favoriteIds.map((id) =>
-          fetch(`/api/kost/get/${id}`).then((res) => res.json()),
+          fetch(`${import.meta.env.VITE_API_URL}/api/kost/get/${id}`).then(
+            (res) => res.json(),
+          ),
         );
         const kostsData = await Promise.all(promises);
         setFavoriteKosts(kostsData);

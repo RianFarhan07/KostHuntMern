@@ -1,4 +1,3 @@
-// Utility function to format date
 const formatDate = (dateString) => {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString();
@@ -190,23 +189,19 @@ const createCompleteExcelData = (stats) => {
   };
 };
 
-// Function to download Excel
 import * as XLSX from "xlsx";
 const downloadCompleteExcel = (stats) => {
   const workbook = XLSX.utils.book_new();
   const sheets = createCompleteExcelData(stats);
 
-  // Create and append each sheet
   Object.entries(sheets).forEach(([sheetName, data]) => {
     const worksheet = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
   });
 
-  // Generate filename with current date
   const date = new Date().toISOString().split("T")[0];
   const filename = `complete-kost-statistics-${date}.xlsx`;
 
-  // Write and download the file
   XLSX.writeFile(workbook, filename);
 };
 

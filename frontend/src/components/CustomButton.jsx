@@ -1,5 +1,4 @@
-/* eslint-disable react/prop-types */
-import React from "react";
+import PropTypes from "prop-types";
 
 const CustomButton = ({
   children,
@@ -40,6 +39,15 @@ const CustomButton = ({
       {children}
     </button>
   );
+};
+CustomButton.propTypes = {
+  children: PropTypes.node.isRequired,
+  onClick: PropTypes.func,
+  variant: PropTypes.oneOf(["primary", "outline", "danger", "success"]),
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
+  type: PropTypes.oneOf(["button", "submit", "reset"]),
+  size: PropTypes.oneOf(["small", "medium", "large"]),
 };
 
 export default CustomButton;

@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPaperPlane, FaStar, FaTimes, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
+import PropTypes from "prop-types";
 
 const ReviewKostModal = ({
   isOpen,
@@ -48,8 +49,8 @@ const ReviewKostModal = ({
     try {
       setLoading(true);
       const endpoint = existingReview
-        ? `/api/kost/updateReview/${kostId}`
-        : `/api/kost/addReview/${kostId}`;
+        ? `${import.meta.env.VITE_API_URL}/api/kost/updateReview/${kostId}`
+        : `${import.meta.env.VITE_API_URL}/api/kost/addReview/${kostId}`;
 
       const method = existingReview ? "PUT" : "POST";
 
@@ -113,10 +114,13 @@ const ReviewKostModal = ({
 
       if (result.isConfirmed) {
         setLoading(true);
-        const response = await fetch(`/api/kost/deleteReview/${kostId}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/kost/deleteReview/${kostId}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          },
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -272,4 +276,15 @@ const ReviewKostModal = ({
     </AnimatePresence>
   );
 };
+ReviewKostModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  kostId: PropTypes.string.isRequired,
+  onReviewSubmitted: PropTypes.func.isRequired,
+  existingReview: PropTypes.shape({
+    rating: PropTypes.number,
+    comment: PropTypes.string,
+  }),
+};
+
 export default ReviewKostModal;

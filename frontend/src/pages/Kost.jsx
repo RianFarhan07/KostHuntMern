@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -15,8 +15,6 @@ import {
   FaShoppingCart,
   FaEdit,
   FaTrash,
-  FaToggleOn,
-  FaToggleOff,
   FaUser,
 } from "react-icons/fa";
 import "swiper/css/bundle";
@@ -43,12 +41,16 @@ const KostDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const kostRes = await fetch(`/api/kost/get/${id}`);
+        const kostRes = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/kost/get/${id}`,
+        );
         const kostData = await kostRes.json();
         setKost(kostData);
 
         if (kostData.userRef) {
-          const ownerRes = await fetch(`/api/user/${kostData.userRef}`);
+          const ownerRes = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/user/${kostData.userRef}`,
+          );
           const ownerData = await ownerRes.json();
           setOwner(ownerData);
         }
@@ -61,7 +63,9 @@ const KostDetail = () => {
           await Promise.all(
             uniqueUserIds.map(async (userId) => {
               try {
-                const userRes = await fetch(`/api/user/${userId}`);
+                const userRes = await fetch(
+                  `${import.meta.env.VITE_API_URL}/api/user/${userId}`,
+                );
                 const userData = await userRes.json();
                 reviewerData[userId] = userData;
               } catch (error) {
@@ -88,16 +92,19 @@ const KostDetail = () => {
   const handleAvailabilityToggle = async (checked) => {
     try {
       setIsUpdating(true);
-      const response = await fetch(`/api/kost/update/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/kost/update/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            availability: checked,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          availability: checked,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -158,13 +165,16 @@ const KostDetail = () => {
           },
         });
 
-        const response = await fetch(`/api/kost/delete/${id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/kost/delete/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
           },
-          credentials: "include",
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json();

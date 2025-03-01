@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import {
   FaCheck,
   FaEdit,
@@ -20,7 +19,8 @@ import { autoLogout } from "../redux/user/userSlice";
 import Swal from "sweetalert2";
 import ModernToggle from "./ModernToggle";
 import { useEffect, useState } from "react";
-``;
+import PropTypes from "prop-types";
+
 const KostCard = ({
   item: initialItem,
   isMyKostList,
@@ -80,16 +80,19 @@ const KostCard = ({
     try {
       setIsUpdating(true);
 
-      const response = await fetch(`/api/kost/update/${item._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/kost/update/${item._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            availability: checked,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          availability: checked,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -156,13 +159,16 @@ const KostCard = ({
         });
 
         // Make delete request
-        const response = await fetch(`/api/kost/delete/${kostId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/kost/delete/${kostId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include", // Important for sending cookies
           },
-          credentials: "include", // Important for sending cookies
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -455,6 +461,13 @@ const KostCard = ({
       </div>
     </motion.div>
   );
+};
+KostCard.propTypes = {
+  item: PropTypes.object.isRequired,
+  isMyKostList: PropTypes.bool,
+  isMyFavorite: PropTypes.bool,
+  onToggleSelect: PropTypes.func,
+  isSelected: PropTypes.bool,
 };
 
 export default KostCard;

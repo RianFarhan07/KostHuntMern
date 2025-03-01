@@ -1,6 +1,4 @@
-import React from "react";
 import ibuKostKuning from "../assets/ibukostkuning.jpg";
-import homesvg from "../assets/house-with-money-symbol-svgrepo-com.svg";
 import "../styles/section.css";
 
 import { motion } from "framer-motion";

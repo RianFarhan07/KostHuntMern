@@ -76,12 +76,13 @@ export const google = async (req, res, next) => {
     }
 
     // cek user apakah ada
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({ email });
     if (user) {
       // Jika user sudah ada, buat JWT
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
       const { password: pass, ...rest } = user._doc;
 
+      // GUNAKAN CARA YANG SAMA SEPERTI SIGNIN BIASA
       res
         .cookie("access_token", token, {
           httpOnly: false,
